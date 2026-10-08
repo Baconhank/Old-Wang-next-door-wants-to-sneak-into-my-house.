@@ -28,9 +28,7 @@
       width: 100vw;
       max-width: 960px;
       height: 540px;
-      background-color: #1e293b;
-      background-size: cover;
-      background-position: center;
+      background-color: #000000;
       border: 1px solid #334155;
       overflow: hidden;
       display: flex;
@@ -39,7 +37,43 @@
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     }
 
-    /* 遮罩視窗（選單、成就） */
+    /* 背景圖層 (支援平滑淡入淡出) */
+    #background-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-size: cover;
+      background-position: center;
+      opacity: 0;
+      transition: opacity 1s ease-in-out;
+      z-index: 1;
+    }
+
+    /* 角色立繪層 (支援平滑淡入淡出) */
+    #character-layer {
+      position: absolute;
+      bottom: 0px;
+      left: 50%;
+      transform: translateX(-50%);
+      height: 82%;
+      pointer-events: none;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.8s ease-in-out;
+      z-index: 2;
+    }
+
+    #character-layer img {
+      max-height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.6));
+    }
+
+    /* 全螢幕遮罩層 (選單、成就) */
     .overlay-screen {
       position: absolute;
       top: 0;
@@ -146,7 +180,7 @@
       color: #94a3b8;
     }
 
-    /* 開場動畫層 (飛機俯衝降落) */
+    /* 開場飛機動畫層 */
     #cutscene-layer {
       position: absolute;
       top: 0;
@@ -166,7 +200,7 @@
       top: -120px;
       left: -160px;
       opacity: 0.95;
-      transform: rotate(35deg); /* 朝向右下俯衝角度 */
+      transform: rotate(35deg);
       pointer-events: none;
       filter: drop-shadow(0 15px 15px rgba(0, 0, 0, 0.6));
     }
@@ -191,24 +225,6 @@
 
     .anim-plane-landing {
       animation: planeLandingMotion 3.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-    }
-
-    /* 角色立繪區 */
-    #character-layer {
-      position: absolute;
-      bottom: 120px;
-      left: 50%;
-      transform: translateX(-50%);
-      height: 70%;
-      pointer-events: none;
-      display: flex;
-      align-items: flex-end;
-      justify-content: center;
-    }
-
-    #character-layer img {
-      max-height: 100%;
-      object-fit: contain;
     }
 
     /* 對話框區域 */
@@ -237,7 +253,7 @@
       min-height: 50px;
     }
 
-    /* 右上控制按鈕 */
+    /* 控制按鈕 */
     #control-bar {
       position: absolute;
       top: 14px;
@@ -262,7 +278,7 @@
       background: rgba(255, 255, 255, 0.25);
     }
 
-    /* 選項層 */
+    /* 選擇層 */
     #choice-layer {
       position: absolute;
       top: 0;
@@ -286,6 +302,14 @@
 <body>
 
   <div id="game-container">
+    <!-- 背景層 -->
+    <div id="background-layer"></div>
+
+    <!-- 立繪層 -->
+    <div id="character-layer">
+      <img id="character-img" src="" alt="角色立繪">
+    </div>
+
     <!-- 起始選單 -->
     <div id="start-menu" class="overlay-screen">
       <div class="title">隔壁老王要偷家</div>
@@ -306,7 +330,6 @@
 
     <!-- 開場動畫層 -->
     <div id="cutscene-layer" class="hidden">
-      <!-- 圖片路徑指向 assets 資料夾 -->
       <img id="plane-sprite" src="assets/plane.png" alt="飛機降落">
     </div>
 
@@ -314,11 +337,6 @@
     <div id="control-bar">
       <button id="home-btn" class="ctrl-btn">主選單</button>
       <button id="skip-btn" class="ctrl-btn">SKIP</button>
-    </div>
-
-    <!-- 立繪區 -->
-    <div id="character-layer">
-      <img id="character-img" class="hidden" alt="角色立繪">
     </div>
 
     <!-- 對話框 -->
@@ -332,7 +350,7 @@
   </div>
 
   <script>
-    // ===== Web Audio 飛機降落音效合成 =====
+    // ===== 音效合成 =====
     function playPlaneLandingSound() {
       try {
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -365,7 +383,7 @@
         noise.start();
         noise.stop(ctx.currentTime + 3.5);
       } catch (e) {
-        console.warn("瀏覽器限制音訊播放", e);
+        console.warn("音訊播放被瀏覽器限制", e);
       }
     }
 
@@ -421,31 +439,41 @@
       });
     }
 
-    // ===== 劇本資料庫 =====
+    // ===== 劇本節點庫 (支援 bg 與 character 視覺設定) =====
     const storyScript = {
       intro_1: {
         speaker: "隔壁老王",
         text: "我叫隔壁老王",
+        bg: "assets/airport.jpg",          // 漸出第一張：機場背景
+        character: "assets/laowang.png",    // 疊加第二張：老王立繪
         nextNode: "intro_2"
       },
       intro_2: {
         speaker: "隔壁老王",
         text: "是個漂泊在外的留子",
+        bg: "assets/airport.jpg",
+        character: "assets/laowang.png",
         nextNode: "intro_3"
       },
       intro_3: {
         speaker: "隔壁老王",
         text: "至於我為甚麼現在會在機場",
+        bg: "assets/airport.jpg",
+        character: "assets/laowang.png",
         nextNode: "intro_4"
       },
       intro_4: {
         speaker: "隔壁老王",
         text: "一切的起因是.....",
+        bg: "assets/airport.jpg",
+        character: "assets/laowang.png",
         nextNode: "intro_flashback"
       },
       intro_flashback: {
         speaker: "旁白",
         text: "「在不久之前」",
+        bg: null,                          // 進入回憶：背景淡出全黑
+        character: null,                   // 立繪淡出
         nextNode: "intro_5"
       },
       intro_5: {
@@ -506,6 +534,8 @@
       choice_hub: {
         speaker: "隔壁老王",
         text: "不知道現在要幹嘛呢",
+        bg: "assets/airport.jpg",          // 回到機場現場
+        character: "assets/laowang.png",
         choices: [
           { text: "去找前女友", nextNode: "route_ex" },
           { text: "吃鴨肉飯", nextNode: "route_food" }
@@ -514,12 +544,16 @@
       route_ex: {
         speaker: "隔壁老王",
         text: "那約她去看個電影好了",
+        bg: "assets/airport.jpg",
+        character: "assets/laowang.png",
         unlockAchievement: "achieve_ex",
         nextNode: "end"
       },
       route_food: {
         speaker: "隔壁老王",
         text: "好主意！巷口那間當歸鴨肉飯我朝思暮想好久了，走起！",
+        bg: "assets/airport.jpg",
+        character: "assets/laowang.png",
         unlockAchievement: "achieve_food",
         nextNode: "end"
       },
@@ -536,11 +570,16 @@
     let typeTimer = null;
     let currentFullText = "";
     let cutsceneTimer = null;
+    let currentBgSrc = "";
+    let currentCharacterSrc = "";
 
     const startMenu = document.getElementById("start-menu");
     const achieveScreen = document.getElementById("achieve-screen");
     const cutsceneLayer = document.getElementById("cutscene-layer");
     const planeSprite = document.getElementById("plane-sprite");
+    const bgLayer = document.getElementById("background-layer");
+    const charLayer = document.getElementById("character-layer");
+    const charImg = document.getElementById("character-img");
     const dialogueBox = document.getElementById("dialogue-box");
     const speakerEl = document.getElementById("speaker-name");
     const textEl = document.getElementById("dialogue-text");
@@ -548,11 +587,38 @@
     const skipBtn = document.getElementById("skip-btn");
     const homeBtn = document.getElementById("home-btn");
 
+    // ===== 視覺圖層更新 (背景與立繪淡入淡出) =====
+    function updateVisualLayers(node) {
+      // 1. 更新背景
+      if (node.bg) {
+        if (currentBgSrc !== node.bg) {
+          currentBgSrc = node.bg;
+          bgLayer.style.backgroundImage = `url('${node.bg}')`;
+          bgLayer.style.opacity = "1";
+        }
+      } else {
+        currentBgSrc = "";
+        bgLayer.style.opacity = "0";
+      }
+
+      // 2. 更新立繪
+      if (node.character) {
+        if (currentCharacterSrc !== node.character) {
+          currentCharacterSrc = node.character;
+          charImg.src = node.character;
+          charLayer.style.opacity = "1";
+        }
+      } else {
+        currentCharacterSrc = "";
+        charLayer.style.opacity = "0";
+      }
+    }
+
     // ===== 開場動畫演播 =====
     function playIntroCutscene(onComplete) {
       cutsceneLayer.classList.remove("hidden");
       planeSprite.classList.remove("anim-plane-landing");
-      void planeSprite.offsetWidth; // 強制重置動畫
+      void planeSprite.offsetWidth;
 
       playPlaneLandingSound();
       planeSprite.classList.add("anim-plane-landing");
@@ -565,7 +631,6 @@
         if (onComplete) onComplete();
       };
 
-      // 點擊動畫可直接跳過
       cutsceneLayer.addEventListener("click", finishCutscene);
       cutsceneTimer = setTimeout(finishCutscene, 3500);
     }
@@ -574,8 +639,13 @@
     function startGame() {
       startMenu.classList.add("hidden");
       achieveScreen.classList.add("hidden");
-      
-      // 先播飛機降落動畫與音效，播完再進第一句
+
+      // 重置背景與立繪為全黑
+      currentBgSrc = "";
+      currentCharacterSrc = "";
+      bgLayer.style.opacity = "0";
+      charLayer.style.opacity = "0";
+
       playIntroCutscene(() => {
         renderNode("intro_1");
       });
@@ -587,6 +657,10 @@
       isTyping = false;
       cutsceneLayer.classList.add("hidden");
       choiceLayer.classList.add("hidden");
+      bgLayer.style.opacity = "0";
+      charLayer.style.opacity = "0";
+      currentBgSrc = "";
+      currentCharacterSrc = "";
       startMenu.classList.remove("hidden");
     }
 
@@ -598,6 +672,9 @@
       speakerEl.textContent = node.speaker || "";
       choiceLayer.classList.add("hidden");
       choiceLayer.innerHTML = "";
+
+      // 更新畫面背景與老王立繪
+      updateVisualLayers(node);
 
       if (node.unlockAchievement) {
         unlockAchievement(node.unlockAchievement);
@@ -686,7 +763,6 @@
     skipBtn.addEventListener("click", (e) => {
       e.stopPropagation();
 
-      // 若正在開場動畫，SKIP 直接結束動畫進對話
       if (!cutsceneLayer.classList.contains("hidden")) {
         clearTimeout(cutsceneTimer);
         cutsceneLayer.classList.add("hidden");
