@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>視覺小說小品</title>
+  <title>隔壁老王要偷家</title>
   <style>
     * {
       box-sizing: border-box;
@@ -191,7 +191,7 @@
       min-height: 50px;
     }
 
-    /* 右上角控制鈕 (SKIP / HOME) */
+    /* 右上角控制鈕 */
     #control-bar {
       position: absolute;
       top: 14px;
@@ -216,7 +216,7 @@
       background: rgba(255, 255, 255, 0.25);
     }
 
-    /* 遊戲內分歧選項層 */
+    /* 劇情選擇層 */
     #choice-layer {
       position: absolute;
       top: 0;
@@ -254,9 +254,7 @@
           <h2>成就列表</h2>
           <button id="btn-close-achieve" class="ctrl-btn">返回選單</button>
         </div>
-        <div id="achieve-items-container" class="achieve-list">
-          <!-- 成就項目由 JS 自動生成 -->
-        </div>
+        <div id="achieve-items-container" class="achieve-list"></div>
       </div>
     </div>
 
@@ -282,7 +280,7 @@
   </div>
 
   <script>
-    // 成就資料清單
+    // 成就資料庫
     const ACHIEVEMENTS = [
       {
         id: "achieve_ex",
@@ -298,11 +296,36 @@
       }
     ];
 
-    // 劇本節點庫 (可在節點中加入 unlockAchievement 觸發解鎖)
+    // 劇本節點庫：自白連段 -> 選擇分支
     const storyScript = {
-      start: {
+      intro_1: {
         speaker: "隔壁老王",
-        text: "我剛從國外回來，沒什麼事，不知道現在要幹嘛呢...",
+        text: "我叫隔壁老王。",
+        nextNode: "intro_2"
+      },
+      intro_2: {
+        speaker: "隔壁老王",
+        text: "是個漂泊在外的留子。",
+        nextNode: "intro_3"
+      },
+      intro_3: {
+        speaker: "隔壁老王",
+        text: "一直在國外拈花惹草的我，這次回來就只有一個目的——",
+        nextNode: "intro_4"
+      },
+      intro_4: {
+        speaker: "隔壁老王",
+        text: "「奪回屬於我的榮耀！！！」",
+        nextNode: "intro_5"
+      },
+      intro_5: {
+        speaker: "隔壁老王",
+        text: "當然還有吃一碗香噴噴的鴨肉飯，畢竟我把輸家當早餐吃。",
+        nextNode: "choice_hub"
+      },
+      choice_hub: {
+        speaker: "隔壁老王",
+        text: "話是這麼說... 剛下飛機沒什麼事，現在第一步該幹嘛呢？",
         choices: [
           { text: "去找前女友", nextNode: "route_ex" },
           { text: "吃鴨肉飯", nextNode: "route_food" }
@@ -327,8 +350,8 @@
       }
     };
 
-    // 遊戲狀態
-    let currentNodeKey = "start";
+    // 狀態變數
+    let currentNodeKey = "intro_1";
     let isTyping = false;
     let typeTimer = null;
     let currentFullText = "";
@@ -387,7 +410,7 @@
     function startGame() {
       startMenu.classList.add("hidden");
       achieveScreen.classList.add("hidden");
-      renderNode("start");
+      renderNode("intro_1");
     }
 
     function returnToMenu() {
@@ -406,7 +429,6 @@
       choiceLayer.classList.add("hidden");
       choiceLayer.innerHTML = "";
 
-      // 檢查是否在此節點解鎖成就
       if (node.unlockAchievement) {
         unlockAchievement(node.unlockAchievement);
       }
