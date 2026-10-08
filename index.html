@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>視覺小說原型</title>
+  <title>視覺小說小品</title>
   <style>
     * {
       box-sizing: border-box;
@@ -13,7 +13,7 @@
     }
 
     body {
-      background-color: #121212;
+      background-color: #0f172a;
       color: #ffffff;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
       display: flex;
@@ -23,23 +23,132 @@
       overflow: hidden;
     }
 
-    /* 遊戲主畫面容器 (固定 16:9 比例) */
+    /* 遊戲主畫面容器 (16:9) */
     #game-container {
       position: relative;
       width: 100vw;
       max-width: 960px;
       height: 540px;
-      background-color: #1f242d;
+      background-color: #1e293b;
       background-size: cover;
       background-position: center;
-      border: 1px solid #333;
+      border: 1px solid #334155;
       overflow: hidden;
       display: flex;
       flex-direction: column;
       justify-content: flex-end;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     }
 
-    /* 角色立繪展示區 */
+    /* 通用全螢幕遮罩層 (選單、成就、選項) */
+    .overlay-screen {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 23, 42, 0.95);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 100;
+      backdrop-filter: blur(4px);
+    }
+
+    .title {
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: 2px;
+      margin-bottom: 36px;
+      color: #38bdf8;
+      text-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+    }
+
+    .menu-btn {
+      background: #1e293b;
+      color: #f8fafc;
+      border: 1px solid #475569;
+      padding: 14px 36px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      min-width: 240px;
+      margin-bottom: 16px;
+      transition: all 0.2s ease;
+    }
+
+    .menu-btn:hover {
+      background: #334155;
+      border-color: #38bdf8;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(56, 189, 248, 0.2);
+    }
+
+    /* 成就清單視窗 */
+    #achievement-modal {
+      width: 80%;
+      max-width: 600px;
+      background: #1e293b;
+      border: 1px solid #475569;
+      border-radius: 12px;
+      padding: 24px;
+      max-height: 80%;
+      overflow-y: auto;
+    }
+
+    .achieve-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 18px;
+    }
+
+    .achieve-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .achieve-item {
+      display: flex;
+      align-items: center;
+      background: #0f172a;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 12px 16px;
+      opacity: 0.5;
+      transition: opacity 0.2s;
+    }
+
+    .achieve-item.unlocked {
+      opacity: 1;
+      border-color: #fbbf24;
+      background: rgba(251, 191, 36, 0.05);
+    }
+
+    .achieve-icon {
+      font-size: 1.8rem;
+      margin-right: 14px;
+    }
+
+    .achieve-info h4 {
+      font-size: 1rem;
+      margin-bottom: 4px;
+      color: #e2e8f0;
+    }
+
+    .achieve-item.unlocked h4 {
+      color: #fbbf24;
+    }
+
+    .achieve-info p {
+      font-size: 0.85rem;
+      color: #94a3b8;
+    }
+
+    /* 角色立繪區 */
     #character-layer {
       position: absolute;
       bottom: 120px;
@@ -60,8 +169,8 @@
     /* 對話框區域 */
     #dialogue-box {
       position: relative;
-      background: rgba(15, 23, 42, 0.88);
-      border-top: 2px solid #3b82f6;
+      background: rgba(15, 23, 42, 0.9);
+      border-top: 2px solid #38bdf8;
       padding: 20px 24px 16px;
       min-height: 130px;
       cursor: pointer;
@@ -71,7 +180,7 @@
     #speaker-name {
       font-weight: 700;
       font-size: 1.05rem;
-      color: #60a5fa;
+      color: #38bdf8;
       margin-bottom: 6px;
     }
 
@@ -82,7 +191,7 @@
       min-height: 50px;
     }
 
-    /* 功能按鈕區 (Skip, Auto 等) */
+    /* 右上角控制鈕 (SKIP / HOME) */
     #control-bar {
       position: absolute;
       top: 14px;
@@ -93,52 +202,34 @@
     }
 
     .ctrl-btn {
-      background: rgba(255, 255, 255, 0.15);
-      border: 1px solid rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.25);
       color: #fff;
       font-size: 0.8rem;
-      padding: 4px 10px;
+      padding: 5px 12px;
       border-radius: 4px;
       cursor: pointer;
       transition: background 0.2s;
     }
 
     .ctrl-btn:hover {
-      background: rgba(255, 255, 255, 0.3);
+      background: rgba(255, 255, 255, 0.25);
     }
 
-    /* 選項面板 */
+    /* 遊戲內分歧選項層 */
     #choice-layer {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.45);
+      background: rgba(0, 0, 0, 0.5);
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
       gap: 16px;
       z-index: 30;
-    }
-
-    .choice-btn {
-      background: #1e293b;
-      color: #f8fafc;
-      border: 1px solid #475569;
-      padding: 12px 28px;
-      font-size: 1rem;
-      border-radius: 6px;
-      cursor: pointer;
-      min-width: 260px;
-      text-align: center;
-      transition: background 0.2s, border-color 0.2s;
-    }
-
-    .choice-btn:hover {
-      background: #334155;
-      border-color: #60a5fa;
     }
 
     .hidden {
@@ -149,68 +240,163 @@
 <body>
 
   <div id="game-container">
-    <!-- 控制列 -->
+    <!-- 1. 起始選單畫面 -->
+    <div id="start-menu" class="overlay-screen">
+      <div class="title">老王的回國日常</div>
+      <button id="btn-start" class="menu-btn">開始遊戲</button>
+      <button id="btn-achieve" class="menu-btn">成就列表</button>
+    </div>
+
+    <!-- 2. 成就清單視窗 -->
+    <div id="achieve-screen" class="overlay-screen hidden">
+      <div id="achievement-modal">
+        <div class="achieve-header">
+          <h2>成就列表</h2>
+          <button id="btn-close-achieve" class="ctrl-btn">返回選單</button>
+        </div>
+        <div id="achieve-items-container" class="achieve-list">
+          <!-- 成就項目由 JS 自動生成 -->
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. 遊戲內控制列 -->
     <div id="control-bar">
+      <button id="home-btn" class="ctrl-btn">主選單</button>
       <button id="skip-btn" class="ctrl-btn">SKIP</button>
     </div>
 
-    <!-- 立繪 -->
+    <!-- 4. 立繪區 -->
     <div id="character-layer">
       <img id="character-img" class="hidden" alt="角色立繪">
     </div>
 
-    <!-- 對話框 -->
+    <!-- 5. 對話框 -->
     <div id="dialogue-box">
       <div id="speaker-name"></div>
       <div id="dialogue-text"></div>
     </div>
 
-    <!-- 選項層 -->
+    <!-- 6. 劇情選擇層 -->
     <div id="choice-layer" class="hidden"></div>
   </div>
 
   <script>
-    // 劇本資料庫
+    // 成就資料清單
+    const ACHIEVEMENTS = [
+      {
+        id: "achieve_ex",
+        title: "不堪回首",
+        desc: "試圖聯絡前女友，但換來一陣尷尬。",
+        icon: "💔"
+      },
+      {
+        id: "achieve_food",
+        title: "老饕回歸",
+        desc: "回國第一件事就是怒吃當歸鴨肉飯！",
+        icon: "🍲"
+      }
+    ];
+
+    // 劇本節點庫 (可在節點中加入 unlockAchievement 觸發解鎖)
     const storyScript = {
       start: {
         speaker: "隔壁老王",
         text: "我剛從國外回來，沒什麼事，不知道現在要幹嘛呢...",
         choices: [
-          { text: "去找前女友", nextNode: "route_ex" },
-          { text: "吃鴨肉飯", nextNode: "route_food" }
+          { text: "選項 A：去找前女友", nextNode: "route_ex" },
+          { text: "選項 B：吃鴨肉飯", nextNode: "route_food" }
         ]
       },
       route_ex: {
         speaker: "隔壁老王",
-        text: "呃... 你認真的嗎？她電話好像早就換了，去那裡只會尷尬吧！",
+        text: "呃... 你認真的嗎？她電話早就換了，去那裡只會尷尬而已吧！",
+        unlockAchievement: "achieve_ex",
         nextNode: "end"
       },
       route_food: {
         speaker: "隔壁老王",
-        text: "好主意！巷口那間當歸鴨肉飯我朝思暮想好久了，走吧！",
+        text: "好主意！巷口那間當歸鴨肉飯我朝思暮想好久了，走起！",
+        unlockAchievement: "achieve_food",
         nextNode: "end"
       },
       end: {
         speaker: "系統",
-        text: "（體驗版測試結束，點擊重新開始）",
-        nextNode: "start"
+        text: "【章節結束】點擊對話框返回起始選單。",
+        onNext: () => returnToMenu()
       }
     };
 
-    // 狀態變數
+    // 遊戲狀態
     let currentNodeKey = "start";
     let isTyping = false;
     let typeTimer = null;
     let currentFullText = "";
 
     // DOM 元素
+    const startMenu = document.getElementById("start-menu");
+    const achieveScreen = document.getElementById("achieve-screen");
+    const dialogueBox = document.getElementById("dialogue-box");
     const speakerEl = document.getElementById("speaker-name");
     const textEl = document.getElementById("dialogue-text");
-    const dialogueBox = document.getElementById("dialogue-box");
     const choiceLayer = document.getElementById("choice-layer");
     const skipBtn = document.getElementById("skip-btn");
+    const homeBtn = document.getElementById("home-btn");
+    const btnStart = document.getElementById("btn-start");
+    const btnAchieve = document.getElementById("btn-achieve");
+    const btnCloseAchieve = document.getElementById("btn-close-achieve");
+    const achieveItemsContainer = document.getElementById("achieve-items-container");
 
-    // 渲染指定節點
+    // ===== 成就系統核心 =====
+    function getUnlockedAchievements() {
+      try {
+        return JSON.parse(localStorage.getItem("vn_achievements") || "[]");
+      } catch {
+        return [];
+      }
+    }
+
+    function unlockAchievement(id) {
+      const unlocked = getUnlockedAchievements();
+      if (!unlocked.includes(id)) {
+        unlocked.push(id);
+        localStorage.setItem("vn_achievements", JSON.stringify(unlocked));
+      }
+    }
+
+    function renderAchievementList() {
+      const unlocked = getUnlockedAchievements();
+      achieveItemsContainer.innerHTML = "";
+
+      ACHIEVEMENTS.forEach(ach => {
+        const isUnlocked = unlocked.includes(ach.id);
+        const item = document.createElement("div");
+        item.className = `achieve-item ${isUnlocked ? "unlocked" : ""}`;
+        item.innerHTML = `
+          <div class="achieve-icon">${isUnlocked ? ach.icon : "🔒"}</div>
+          <div class="achieve-info">
+            <h4>${isUnlocked ? ach.title : "？？？"}</h4>
+            <p>${isUnlocked ? ach.desc : "尚未解鎖此成就"}</p>
+          </div>
+        `;
+        achieveItemsContainer.appendChild(item);
+      });
+    }
+
+    // ===== 遊戲流程控制 =====
+    function startGame() {
+      startMenu.classList.add("hidden");
+      achieveScreen.classList.add("hidden");
+      renderNode("start");
+    }
+
+    function returnToMenu() {
+      clearInterval(typeTimer);
+      isTyping = false;
+      choiceLayer.classList.add("hidden");
+      startMenu.classList.remove("hidden");
+    }
+
     function renderNode(nodeKey) {
       const node = storyScript[nodeKey];
       if (!node) return;
@@ -220,16 +406,18 @@
       choiceLayer.classList.add("hidden");
       choiceLayer.innerHTML = "";
 
-      // 啟動打字機效果
+      // 檢查是否在此節點解鎖成就
+      if (node.unlockAchievement) {
+        unlockAchievement(node.unlockAchievement);
+      }
+
       typewriter(node.text, () => {
-        // 文字播完後，若有選項則開啟選項面板
         if (node.choices && node.choices.length > 0) {
           showChoices(node.choices);
         }
       });
     }
 
-    // 打字機動畫
     function typewriter(fullText, onComplete) {
       clearInterval(typeTimer);
       isTyping = true;
@@ -249,7 +437,6 @@
       }, 35);
     }
 
-    // 立即顯示全部文字
     function completeTextInstantly() {
       clearInterval(typeTimer);
       textEl.textContent = currentFullText;
@@ -261,12 +448,11 @@
       }
     }
 
-    // 顯示選項
     function showChoices(choices) {
       choiceLayer.innerHTML = "";
       choices.forEach(choice => {
         const btn = document.createElement("button");
-        btn.className = "choice-btn";
+        btn.className = "menu-btn";
         btn.textContent = choice.text;
         btn.onclick = () => renderNode(choice.nextNode);
         choiceLayer.appendChild(btn);
@@ -274,28 +460,37 @@
       choiceLayer.classList.remove("hidden");
     }
 
-    // 點擊對話框推進劇情
+    // ===== 監聽事件 =====
+    btnStart.addEventListener("click", startGame);
+
+    btnAchieve.addEventListener("click", () => {
+      renderAchievementList();
+      achieveScreen.classList.remove("hidden");
+    });
+
+    btnCloseAchieve.addEventListener("click", () => {
+      achieveScreen.classList.add("hidden");
+    });
+
+    homeBtn.addEventListener("click", returnToMenu);
+
     dialogueBox.addEventListener("click", () => {
       const node = storyScript[currentNodeKey];
 
-      // 若正在打字，先瞬間補齊文字
       if (isTyping) {
         completeTextInstantly();
         return;
       }
 
-      // 如果有選項，必須點選項才能推進
-      if (node.choices && node.choices.length > 0) {
-        return;
-      }
+      if (node.choices && node.choices.length > 0) return;
 
-      // 推進到下一個節點
-      if (node.nextNode) {
+      if (node.onNext) {
+        node.onNext();
+      } else if (node.nextNode) {
         renderNode(node.nextNode);
       }
     });
 
-    // Skip 按鈕：直接跳過當前打字機動畫並推進
     skipBtn.addEventListener("click", (e) => {
       e.stopPropagation();
       const node = storyScript[currentNodeKey];
@@ -306,9 +501,6 @@
         renderNode(node.nextNode);
       }
     });
-
-    // 啟動遊戲
-    renderNode("start");
   </script>
 </body>
 </html>
