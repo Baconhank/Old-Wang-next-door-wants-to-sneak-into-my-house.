@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>視覺小說原型</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    body {
+      background-color: #121212;
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    /* 遊戲主畫面容器 (固定 16:9 比例) */
+    #game-container {
+      position: relative;
+      width: 100vw;
+      max-width: 960px;
+      height: 540px;
+      background-color: #1f242d;
+      background-size: cover;
+      background-position: center;
+      border: 1px solid #333;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+
+    /* 角色立繪展示區 */
+    #character-layer {
+      position: absolute;
+      bottom: 120px;
+      left: 50%;
+      transform: translateX(-50%);
+      height: 70%;
+      pointer-events: none;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+    }
+
+    #character-layer img {
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    /* 對話框區域 */
+    #dialogue-box {
+      position: relative;
+      background: rgba(15, 23, 42, 0.88);
+      border-top: 2px solid #3b82f6;
+      padding: 20px 24px 16px;
+      min-height: 130px;
+      cursor: pointer;
+      z-index: 10;
+    }
+
+    #speaker-name {
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: #60a5fa;
+      margin-bottom: 6px;
+    }
+
+    #dialogue-text {
+      font-size: 1.1rem;
+      line-height: 1.6;
+      color: #f1f5f9;
+      min-height: 50px;
+    }
+
+    /* 功能按鈕區 (Skip, Auto 等) */
+    #control-bar {
+      position: absolute;
+      top: 14px;
+      right: 16px;
+      display: flex;
+      gap: 8px;
+      z-index: 20;
+    }
+
+    .ctrl-btn {
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      color: #fff;
+      font-size: 0.8rem;
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+
+    .ctrl-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+    }
+
+    /* 選項面板 */
+    #choice-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.45);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      z-index: 30;
+    }
+
+    .choice-btn {
+      background: #1e293b;
+      color: #f8fafc;
+      border: 1px solid #475569;
+      padding: 12px 28px;
+      font-size: 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      min-width: 260px;
+      text-align: center;
+      transition: background 0.2s, border-color 0.2s;
+    }
+
+    .choice-btn:hover {
+      background: #334155;
+      border-color: #60a5fa;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="game-container">
+    <!-- 控制列 -->
+    <div id="control-bar">
+      <button id="skip-btn" class="ctrl-btn">SKIP</button>
+    </div>
+
+    <!-- 立繪 -->
+    <div id="character-layer">
+      <img id="character-img" class="hidden" alt="角色立繪">
+    </div>
+
+    <!-- 對話框 -->
+    <div id="dialogue-box">
+      <div id="speaker-name"></div>
+      <div id="dialogue-text"></div>
+    </div>
+
+    <!-- 選項層 -->
+    <div id="choice-layer" class="hidden"></div>
+  </div>
+
+  <script>
+    // 劇本資料庫
+    const storyScript = {
+      start: {
+        speaker: "隔壁老王",
+        text: "我剛從國外回來，沒什麼事，不知道現在要幹嘛呢...",
+        choices: [
+          { text: "去找前女友", nextNode: "route_ex" },
+          { text: "吃鴨肉飯", nextNode: "route_food" }
+        ]
+      },
+      route_ex: {
+        speaker: "隔壁老王",
+        text: "呃... 你認真的嗎？她電話好像早就換了，去那裡只會尷尬吧！",
+        nextNode: "end"
+      },
+      route_food: {
+        speaker: "隔壁老王",
+        text: "好主意！巷口那間當歸鴨肉飯我朝思暮想好久了，走吧！",
+        nextNode: "end"
+      },
+      end: {
+        speaker: "系統",
+        text: "（體驗版測試結束，點擊重新開始）",
+        nextNode: "start"
+      }
+    };
+
+    // 狀態變數
+    let currentNodeKey = "start";
+    let isTyping = false;
+    let typeTimer = null;
+    let currentFullText = "";
+
+    // DOM 元素
+    const speakerEl = document.getElementById("speaker-name");
+    const textEl = document.getElementById("dialogue-text");
+    const dialogueBox = document.getElementById("dialogue-box");
+    const choiceLayer = document.getElementById("choice-layer");
+    const skipBtn = document.getElementById("skip-btn");
+
+    // 渲染指定節點
+    function renderNode(nodeKey) {
+      const node = storyScript[nodeKey];
+      if (!node) return;
+
+      currentNodeKey = nodeKey;
+      speakerEl.textContent = node.speaker || "";
+      choiceLayer.classList.add("hidden");
+      choiceLayer.innerHTML = "";
+
+      // 啟動打字機效果
+      typewriter(node.text, () => {
+        // 文字播完後，若有選項則開啟選項面板
+        if (node.choices && node.choices.length > 0) {
+          showChoices(node.choices);
+        }
+      });
+    }
+
+    // 打字機動畫
+    function typewriter(fullText, onComplete) {
+      clearInterval(typeTimer);
+      isTyping = true;
+      currentFullText = fullText;
+      textEl.textContent = "";
+
+      let charIndex = 0;
+      typeTimer = setInterval(() => {
+        textEl.textContent += fullText[charIndex];
+        charIndex++;
+
+        if (charIndex >= fullText.length) {
+          clearInterval(typeTimer);
+          isTyping = false;
+          if (onComplete) onComplete();
+        }
+      }, 35);
+    }
+
+    // 立即顯示全部文字
+    function completeTextInstantly() {
+      clearInterval(typeTimer);
+      textEl.textContent = currentFullText;
+      isTyping = false;
+
+      const node = storyScript[currentNodeKey];
+      if (node.choices && node.choices.length > 0) {
+        showChoices(node.choices);
+      }
+    }
+
+    // 顯示選項
+    function showChoices(choices) {
+      choiceLayer.innerHTML = "";
+      choices.forEach(choice => {
+        const btn = document.createElement("button");
+        btn.className = "choice-btn";
+        btn.textContent = choice.text;
+        btn.onclick = () => renderNode(choice.nextNode);
+        choiceLayer.appendChild(btn);
+      });
+      choiceLayer.classList.remove("hidden");
+    }
+
+    // 點擊對話框推進劇情
+    dialogueBox.addEventListener("click", () => {
+      const node = storyScript[currentNodeKey];
+
+      // 若正在打字，先瞬間補齊文字
+      if (isTyping) {
+        completeTextInstantly();
+        return;
+      }
+
+      // 如果有選項，必須點選項才能推進
+      if (node.choices && node.choices.length > 0) {
+        return;
+      }
+
+      // 推進到下一個節點
+      if (node.nextNode) {
+        renderNode(node.nextNode);
+      }
+    });
+
+    // Skip 按鈕：直接跳過當前打字機動畫並推進
+    skipBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const node = storyScript[currentNodeKey];
+
+      if (isTyping) {
+        completeTextInstantly();
+      } else if (node.nextNode && (!node.choices || node.choices.length === 0)) {
+        renderNode(node.nextNode);
+      }
+    });
+
+    // 啟動遊戲
+    renderNode("start");
+  </script>
+</body>
+</html>
