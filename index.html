@@ -40,7 +40,7 @@
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     }
 
-    /* 全螢幕遮罩層 (選單、成就、選項) */
+    /* 全螢幕遮罩層 */
     .overlay-screen {
       position: absolute;
       top: 0;
@@ -172,7 +172,7 @@
       background: rgba(15, 23, 42, 0.92);
       border-top: 2px solid #38bdf8;
       padding: 20px 24px 16px;
-      min-height: 140px;
+      min-height: 130px;
       cursor: pointer;
       z-index: 10;
     }
@@ -187,10 +187,9 @@
 
     #dialogue-text {
       font-size: 1.1rem;
-      line-height: 1.7;
+      line-height: 1.6;
       color: #f1f5f9;
-      min-height: 55px;
-      white-space: pre-line; /* 支援文字換行 */
+      min-height: 50px;
     }
 
     /* 右上角控制列 */
@@ -286,9 +285,9 @@
     const ACHIEVEMENTS = [
       {
         id: "achieve_ex",
-        title: "不堪回首",
-        desc: "試圖聯絡前女友，但換來一陣尷尬。",
-        icon: "💔"
+        title: "電影之約",
+        desc: "決定約前女友去看電影。",
+        icon: "🎬"
       },
       {
         id: "achieve_food",
@@ -298,56 +297,91 @@
       }
     ];
 
-    // 劇本節點庫：全新開場長自白與回憶倒敘
+    // 劇本節點庫：每句獨立呈現
     const storyScript = {
       intro_1: {
         speaker: "隔壁老王",
-        text: "我叫隔壁老王。\n是個漂泊在外的留子。",
+        text: "我叫隔壁老王",
         nextNode: "intro_2"
       },
       intro_2: {
         speaker: "隔壁老王",
-        text: "至於我為什麼現在會在機場，一切的起因是……",
-        nextNode: "intro_flashback"
-      },
-      intro_flashback: {
-        speaker: "旁白",
-        text: "「在不久之前——」",
+        text: "是個漂泊在外的留子",
         nextNode: "intro_3"
       },
       intro_3: {
         speaker: "隔壁老王",
-        text: "我獨自在國外的租屋處時，手機突然跳出了一則訊息。\n\n是那個一直偷偷背著現任男友跟我聯絡的前女友傳來的。",
-        nextNode: "intro_msg"
-      },
-      intro_msg: {
-        speaker: "前女友的訊息",
-        text: "「我沒想過\n三年後\n我還會因為你掉眼淚\n好笑了」",
+        text: "至於我為甚麼現在會在機場",
         nextNode: "intro_4"
       },
       intro_4: {
         speaker: "隔壁老王",
-        text: "雖然我的心裡知道，我們的戀情早已停止在三年前的夏天……\n但我的手，還是不自覺地收起了行李。",
+        text: "一切的起因是.....",
+        nextNode: "intro_flashback"
+      },
+      intro_flashback: {
+        speaker: "旁白",
+        text: "「在不久之前」",
         nextNode: "intro_5"
       },
       intro_5: {
         speaker: "隔壁老王",
-        text: "所以，一直在國外拈花惹草的我，這次回來就只有一個目的——",
+        text: "我獨自在國外的租屋處時",
         nextNode: "intro_6"
       },
       intro_6: {
         speaker: "隔壁老王",
-        text: "「奪回屬於我的榮耀！！！」",
+        text: "手機突然跳出了一則訊息",
         nextNode: "intro_7"
       },
       intro_7: {
         speaker: "隔壁老王",
-        text: "當然還有吃一碗香噴噴的鴨肉飯，畢竟我把輸家當早餐吃。",
+        text: "是那個一直偷偷背著現任男友跟我聯絡的前女友傳來的訊息",
+        nextNode: "intro_msg"
+      },
+      intro_msg: {
+        speaker: "前女友的訊息",
+        text: "「我沒想過三年後我還會因為你掉眼淚，好笑了」",
+        nextNode: "intro_8"
+      },
+      intro_8: {
+        speaker: "隔壁老王",
+        text: "雖然我的心裡知道我們的戀情已經停止在三年前的夏天",
+        nextNode: "intro_9"
+      },
+      intro_9: {
+        speaker: "隔壁老王",
+        text: "但我的手還不自覺地收起行李",
+        nextNode: "intro_10"
+      },
+      intro_10: {
+        speaker: "隔壁老王",
+        text: "所以一直在國外拈花惹草的我",
+        nextNode: "intro_11"
+      },
+      intro_11: {
+        speaker: "隔壁老王",
+        text: "這次回來就只有一個目的",
+        nextNode: "intro_12"
+      },
+      intro_12: {
+        speaker: "隔壁老王",
+        text: "「奪回屬於我的榮耀!!!」",
+        nextNode: "intro_13"
+      },
+      intro_13: {
+        speaker: "隔壁老王",
+        text: "當然還有吃一碗香噴噴的鴨肉飯",
+        nextNode: "intro_14"
+      },
+      intro_14: {
+        speaker: "隔壁老王",
+        text: "畢竟我把輸家當早餐吃",
         nextNode: "choice_hub"
       },
       choice_hub: {
         speaker: "隔壁老王",
-        text: "踏出機場大廳，拖著行李箱的我，第一步該往哪走？",
+        text: "不知道現在要幹嘛呢",
         choices: [
           { text: "去找前女友", nextNode: "route_ex" },
           { text: "吃鴨肉飯", nextNode: "route_food" }
@@ -355,13 +389,13 @@
       },
       route_ex: {
         speaker: "隔壁老王",
-        text: "呃... 你認真的嗎？她電話早就換了，而且直接殺過去只會尷尬而已吧！",
+        text: "那約她去看個電影好了",
         unlockAchievement: "achieve_ex",
         nextNode: "end"
       },
       route_food: {
         speaker: "隔壁老王",
-        text: "好主意！天大地大吃飯最大，巷口那間當歸鴨肉飯我朝思暮想好久了，走起！",
+        text: "好主意！巷口那間當歸鴨肉飯我朝思暮想好久了，走起！",
         unlockAchievement: "achieve_food",
         nextNode: "end"
       },
@@ -392,7 +426,7 @@
     const btnCloseAchieve = document.getElementById("btn-close-achieve");
     const achieveItemsContainer = document.getElementById("achieve-items-container");
 
-    // ===== 成就系統核心 =====
+    // 成就核心邏輯
     function getUnlockedAchievements() {
       try {
         return JSON.parse(localStorage.getItem("vn_achievements") || "[]");
@@ -428,7 +462,7 @@
       });
     }
 
-    // ===== 遊戲流程控制 =====
+    // 遊戲流程
     function startGame() {
       startMenu.classList.add("hidden");
       achieveScreen.classList.add("hidden");
@@ -504,7 +538,7 @@
       choiceLayer.classList.remove("hidden");
     }
 
-    // ===== 監聽事件 =====
+    // 事件綁定
     btnStart.addEventListener("click", startGame);
 
     btnAchieve.addEventListener("click", () => {
