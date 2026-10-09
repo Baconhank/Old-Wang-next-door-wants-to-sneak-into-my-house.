@@ -37,7 +37,7 @@
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     }
 
-    /* 背景圖層 (支援平滑淡入淡出) */
+    /* 背景圖層 */
     #background-layer {
       position: absolute;
       top: 0;
@@ -180,7 +180,7 @@
       color: #94a3b8;
     }
 
-    /* 開場動畫層 */
+    /* 開場飛機動畫層 */
     #cutscene-layer {
       position: absolute;
       top: 0;
@@ -212,9 +212,7 @@
         transform: rotate(32deg) scale(0.65);
         opacity: 0.3;
       }
-      20% {
-        opacity: 1;
-      }
+      20% { opacity: 1; }
       100% {
         top: 480px;
         left: 1050px;
@@ -227,7 +225,76 @@
       animation: planeLandingMotion 3.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     }
 
-    /* 手機震動對話框特效 */
+    /* 手機互動圖層 */
+    #phone-interactive-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.55);
+      z-index: 25;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.5s ease-in-out;
+    }
+
+    #phone-interactive-layer.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .phone-wrapper {
+      position: relative;
+      height: 82%;
+      max-height: 440px;
+      border-radius: 36px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8), 0 0 0 4px #222;
+      overflow: hidden;
+      transform: translateY(20px);
+      transition: transform 0.4s ease-out;
+    }
+
+    #phone-interactive-layer.active .phone-wrapper {
+      transform: translateY(0);
+    }
+
+    .phone-wrapper img {
+      height: 100%;
+      width: auto;
+      display: block;
+    }
+
+    /* IG 通知感應點選區 */
+    #ig-notif-hitbox {
+      position: absolute;
+      top: 36.5%;
+      left: 4.5%;
+      width: 91%;
+      height: 12.5%;
+      cursor: pointer;
+      border-radius: 16px;
+      transition: background 0.2s, box-shadow 0.2s;
+      animation: notifPulse 1.8s infinite;
+    }
+
+    #ig-notif-hitbox:hover {
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    @keyframes notifPulse {
+      0%, 100% {
+        box-shadow: 0 0 0 0 rgba(225, 48, 108, 0.4);
+      }
+      50% {
+        box-shadow: 0 0 0 6px rgba(225, 48, 108, 0.7);
+      }
+    }
+
+    /* 手機震動特效 */
     @keyframes phoneShake {
       0%, 100% { transform: translate(0, 0); }
       15% { transform: translate(-3px, 2px); }
@@ -250,7 +317,6 @@
       min-height: 130px;
       cursor: pointer;
       z-index: 10;
-      transition: border-color 0.2s;
     }
 
     #speaker-name {
@@ -268,7 +334,7 @@
       min-height: 50px;
     }
 
-    /* 右上控制按鈕列 */
+    /* 右上控制列 */
     #control-bar {
       position: absolute;
       top: 14px;
@@ -322,22 +388,26 @@
 <body>
 
   <div id="game-container">
-    <!-- 背景層 -->
     <div id="background-layer"></div>
 
-    <!-- 立繪層 -->
     <div id="character-layer">
       <img id="character-img" src="" alt="角色立繪">
     </div>
 
-    <!-- 起始選單 -->
+    <!-- 手機互動圖層：改用 assets/phone.png -->
+    <div id="phone-interactive-layer">
+      <div class="phone-wrapper">
+        <img src="assets/phone.png" alt="手機螢幕">
+        <div id="ig-notif-hitbox" title="點擊檢視 Instagram 通知"></div>
+      </div>
+    </div>
+
     <div id="start-menu" class="overlay-screen">
       <div class="title">隔壁老王要偷家</div>
       <button id="btn-start" class="menu-btn">開始遊戲</button>
       <button id="btn-achieve" class="menu-btn">成就列表</button>
     </div>
 
-    <!-- 成就視窗 -->
     <div id="achieve-screen" class="overlay-screen hidden">
       <div id="achievement-modal">
         <div class="achieve-header">
@@ -348,30 +418,25 @@
       </div>
     </div>
 
-    <!-- 開場動畫層 -->
     <div id="cutscene-layer" class="hidden">
       <img id="plane-sprite" src="assets/plane.png" alt="飛機降落">
     </div>
 
-    <!-- 控制列：新增 BACK 按鈕在 SKIP 旁邊 -->
     <div id="control-bar">
       <button id="home-btn" class="ctrl-btn">主選單</button>
       <button id="back-btn" class="ctrl-btn">BACK</button>
       <button id="skip-btn" class="ctrl-btn">SKIP</button>
     </div>
 
-    <!-- 對話框 -->
     <div id="dialogue-box">
       <div id="speaker-name"></div>
       <div id="dialogue-text"></div>
     </div>
 
-    <!-- 選擇層 -->
     <div id="choice-layer" class="hidden"></div>
   </div>
 
   <script>
-    // ===== Web Audio 聲音合成系統 =====
     function playPlaneLandingSound() {
       try {
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -408,13 +473,11 @@
       }
     }
 
-    // 手機震動音效合成 (雙段嗡嗡聲) + 對話框微震特效
     function playPhoneVibrateSound() {
       try {
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
         const ctx = new AudioCtx();
 
-        // 觸發對話框視覺震動
         const box = document.getElementById("dialogue-box");
         box.classList.add("vibrate-box");
         setTimeout(() => box.classList.remove("vibrate-box"), 650);
@@ -449,7 +512,6 @@
       }
     }
 
-    // ===== 成就系統 =====
     const ACHIEVEMENTS = [
       {
         id: "achieve_ex",
@@ -501,7 +563,6 @@
       });
     }
 
-    // ===== 劇本資料庫 =====
     const storyScript = {
       intro_1: {
         speaker: "隔壁老王",
@@ -541,7 +602,7 @@
       intro_5: {
         speaker: "隔壁老王",
         text: "我獨自在國外的租屋處時",
-        bg: "assets/room.jpg",              // 租屋處背景
+        bg: "assets/room.jpg",
         character: null,
         nextNode: "intro_6"
       },
@@ -550,14 +611,16 @@
         text: "手機突然跳出了一則訊息",
         bg: "assets/room.jpg",
         character: null,
-        onEnter: () => playPhoneVibrateSound(), // 手機震動音效與畫面震動
+        onEnter: () => playPhoneVibrateSound(),
         nextNode: "intro_7"
       },
       intro_7: {
         speaker: "隔壁老王",
-        text: "是那個一直偷偷背著現任男友跟我聯絡的前女友傳來的訊息",
+        text: "是那個一直偷偷背著現任男友跟我聯絡的前女友傳來的訊息\n（請點擊手機上的 Instagram 通知讀取）",
         bg: "assets/room.jpg",
         character: null,
+        showPhone: true,
+        requirePhoneClick: true,
         nextNode: "intro_msg"
       },
       intro_msg: {
@@ -649,7 +712,6 @@
       }
     };
 
-    // ===== 狀態變數與歷史紀錄堆疊 =====
     let currentNodeKey = "intro_1";
     let isTyping = false;
     let typeTimer = null;
@@ -657,12 +719,14 @@
     let cutsceneTimer = null;
     let currentBgSrc = "";
     let currentCharacterSrc = "";
-    let historyStack = []; // 歷史節點紀錄，用於回上一頁
+    let historyStack = [];
 
     const startMenu = document.getElementById("start-menu");
     const achieveScreen = document.getElementById("achieve-screen");
     const cutsceneLayer = document.getElementById("cutscene-layer");
     const planeSprite = document.getElementById("plane-sprite");
+    const phoneInteractiveLayer = document.getElementById("phone-interactive-layer");
+    const igNotifHitbox = document.getElementById("ig-notif-hitbox");
     const bgLayer = document.getElementById("background-layer");
     const charLayer = document.getElementById("character-layer");
     const charImg = document.getElementById("character-img");
@@ -674,7 +738,6 @@
     const backBtn = document.getElementById("back-btn");
     const homeBtn = document.getElementById("home-btn");
 
-    // ===== 視覺圖層更新 =====
     function updateVisualLayers(node) {
       if (node.bg) {
         if (currentBgSrc !== node.bg) {
@@ -697,9 +760,14 @@
         currentCharacterSrc = "";
         charLayer.style.opacity = "0";
       }
+
+      if (node.showPhone) {
+        phoneInteractiveLayer.classList.add("active");
+      } else {
+        phoneInteractiveLayer.classList.remove("active");
+      }
     }
 
-    // ===== 開場動畫演播 =====
     function playIntroCutscene(onComplete) {
       cutsceneLayer.classList.remove("hidden");
       planeSprite.classList.remove("anim-plane-landing");
@@ -720,10 +788,10 @@
       cutsceneTimer = setTimeout(finishCutscene, 3500);
     }
 
-    // ===== 遊戲流程 =====
     function startGame() {
       startMenu.classList.add("hidden");
       achieveScreen.classList.add("hidden");
+      phoneInteractiveLayer.classList.remove("active");
 
       currentBgSrc = "";
       currentCharacterSrc = "";
@@ -742,6 +810,7 @@
       clearTimeout(cutsceneTimer);
       isTyping = false;
       cutsceneLayer.classList.add("hidden");
+      phoneInteractiveLayer.classList.remove("active");
       choiceLayer.classList.add("hidden");
       bgLayer.style.opacity = "0";
       charLayer.style.opacity = "0";
@@ -755,7 +824,6 @@
       backBtn.disabled = historyStack.length === 0;
     }
 
-    // 渲染節點 (pushHistory 控制是否推入上一頁堆疊)
     function renderNode(nodeKey, pushHistory = true) {
       const node = storyScript[nodeKey];
       if (!node) return;
@@ -787,7 +855,6 @@
       });
     }
 
-    // 回到上一頁邏輯
     function goBack() {
       if (historyStack.length === 0) return;
       clearInterval(typeTimer);
@@ -838,7 +905,15 @@
       choiceLayer.classList.remove("hidden");
     }
 
-    // ===== 事件監聽 =====
+    igNotifHitbox.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const node = storyScript[currentNodeKey];
+      if (node && node.requirePhoneClick) {
+        phoneInteractiveLayer.classList.remove("active");
+        renderNode(node.nextNode);
+      }
+    });
+
     document.getElementById("btn-start").addEventListener("click", startGame);
 
     document.getElementById("btn-achieve").addEventListener("click", () => {
@@ -865,6 +940,10 @@
         return;
       }
 
+      if (node.requirePhoneClick) {
+        return;
+      }
+
       if (node.choices && node.choices.length > 0) return;
 
       if (node.onNext) {
@@ -887,7 +966,7 @@
       const node = storyScript[currentNodeKey];
       if (isTyping) {
         completeTextInstantly();
-      } else if (node.nextNode && (!node.choices || node.choices.length === 0)) {
+      } else if (node.nextNode && (!node.choices || node.choices.length === 0) && !node.requirePhoneClick) {
         renderNode(node.nextNode);
       }
     });
