@@ -37,7 +37,6 @@
       box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
     }
 
-    /* 背景圖層 */
     #background-layer {
       position: absolute;
       top: 0;
@@ -51,7 +50,6 @@
       z-index: 1;
     }
 
-    /* 角色立繪層 */
     #character-layer {
       position: absolute;
       bottom: 0px;
@@ -73,7 +71,6 @@
       filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.6));
     }
 
-    /* 全螢幕遮罩層 (選單、成就) */
     .overlay-screen {
       position: absolute;
       top: 0;
@@ -180,7 +177,6 @@
       color: #94a3b8;
     }
 
-    /* 開場飛機動畫層 */
     #cutscene-layer {
       position: absolute;
       top: 0;
@@ -225,7 +221,6 @@
       animation: planeLandingMotion 3.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     }
 
-    /* 手機互動圖層 */
     #phone-interactive-layer {
       position: absolute;
       top: 0;
@@ -269,7 +264,6 @@
       display: block;
     }
 
-    /* IG 通知感應點選區 */
     #ig-notif-hitbox {
       position: absolute;
       top: 36.5%;
@@ -295,7 +289,6 @@
       }
     }
 
-    /* 手機震動特效 */
     @keyframes phoneShake {
       0%, 100% { transform: translate(0, 0); }
       15% { transform: translate(-3px, 2px); }
@@ -309,7 +302,6 @@
       animation: phoneShake 0.15s ease-in-out infinite;
     }
 
-    /* 對話框區域 */
     #dialogue-box {
       position: relative;
       background: rgba(15, 23, 42, 0.95);
@@ -335,7 +327,6 @@
       min-height: 50px;
     }
 
-    /* 右上控制按鈕列 (整合音量調整條) */
     #control-bar {
       position: absolute;
       top: 14px;
@@ -407,7 +398,6 @@
       background: rgba(255, 255, 255, 0.25);
     }
 
-    /* 選擇層 */
     #choice-layer {
       position: absolute;
       top: 0;
@@ -431,7 +421,6 @@
 <body>
 
   <div id="game-container">
-    <!-- 背景音樂 Audio 播放器 -->
     <audio id="bgm-player" src="assets/bgm.mp3" loop preload="auto"></audio>
 
     <div id="background-layer"></div>
@@ -440,7 +429,6 @@
       <img id="character-img" src="" alt="角色立繪">
     </div>
 
-    <!-- 手機互動圖層 -->
     <div id="phone-interactive-layer">
       <div class="phone-wrapper">
         <img src="assets/phone.png" alt="手機螢幕">
@@ -468,7 +456,6 @@
       <img id="plane-sprite" src="assets/plane.png" alt="飛機降落">
     </div>
 
-    <!-- 控制列：音量拉條 + 快捷鍵 -->
     <div id="control-bar">
       <div class="volume-control-box" title="背景音樂音量">
         <span class="volume-icon">🔊</span>
@@ -488,33 +475,82 @@
   </div>
 
   <script>
-    // ===== 音訊控制系統 =====
+    // ===== Web Audio API 串接 BGM (支援無卡頓線性淡入淡出) =====
     const bgmPlayer = document.getElementById("bgm-player");
     const volumeSlider = document.getElementById("volume-slider");
 
-    bgmPlayer.volume = parseFloat(volumeSlider.value);
+    let audioCtx = null;
+    let bgmGainNode = null;
+    let bgmSourceNode = null;
 
-    volumeSlider.addEventListener("input", (e) => {
-      bgmPlayer.volume = parseFloat(e.target.value);
-    });
-
-    function playBgm() {
-      if (bgmPlayer.paused) {
-        bgmPlayer.play().catch(err => {
-          console.warn("BGM 自動播放被限制", err);
-        });
+    function initAudioGraph() {
+      if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContextClass();
+        bgmGainNode = audioCtx.createGain();
+        bgmSourceNode = audioCtx.createMediaElementSource(bgmPlayer);
+        
+        bgmSourceNode.connect(bgmGainNode);
+        bgmGainNode.connect(audioCtx.destination);
+      }
+      if (audioCtx.state === "suspended") {
+        audioCtx.resume();
       }
     }
 
-    function stopBgm() {
+    volumeSlider.addEventListener("input", (e) => {
+      const vol = parseFloat(e.target.value);
+      if (bgmGainNode && audioCtx) {
+        bgmGainNode.gain.cancelScheduledValues(audioCtx.currentTime);
+        bgmGainNode.gain.setValueAtTime(vol, audioCtx.currentTime);
+      }
+    });
+
+    function playBgm() {
+      initAudioGraph();
+      const targetVol = parseFloat(volumeSlider.value);
+      bgmGainNode.gain.cancelScheduledValues(audioCtx.currentTime);
+      bgmGainNode.gain.setValueAtTime(targetVol, audioCtx.currentTime);
+
+      if (bgmPlayer.paused) {
+        bgmPlayer.play().catch(err => console.warn("BGM 播放被瀏覽器限制", err));
+      }
+    }
+
+    // 真正平滑的 2.5 秒淡出邏輯
+    function fadeOutBgm(duration = 2.5) {
+      if (!audioCtx || !bgmGainNode || bgmPlayer.paused) return;
+
+      const currTime = audioCtx.currentTime;
+      const currVol = bgmGainNode.gain.value;
+
+      bgmGainNode.gain.cancelScheduledValues(currTime);
+      bgmGainNode.gain.setValueAtTime(currVol, currTime);
+      bgmGainNode.gain.linearRampToValueAtTime(0.0001, currTime + duration);
+
+      setTimeout(() => {
+        if (bgmGainNode.gain.value <= 0.05) {
+          bgmPlayer.pause();
+          bgmPlayer.currentTime = 0;
+          bgmGainNode.gain.setValueAtTime(parseFloat(volumeSlider.value), audioCtx.currentTime);
+        }
+      }, duration * 1000);
+    }
+
+    function stopBgmInstant() {
+      if (audioCtx && bgmGainNode) {
+        bgmGainNode.gain.cancelScheduledValues(audioCtx.currentTime);
+        bgmGainNode.gain.setValueAtTime(parseFloat(volumeSlider.value), audioCtx.currentTime);
+      }
       bgmPlayer.pause();
       bgmPlayer.currentTime = 0;
     }
 
+    // ===== 飛機與震動音效 =====
     function playPlaneLandingSound() {
       try {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        const ctx = new AudioCtx();
+        initAudioGraph();
+        const ctx = audioCtx;
 
         const bufferSize = ctx.sampleRate * 3.5;
         const buffer = ctx.createBuffer(1, bufferSize, ctx.sampleRate);
@@ -543,14 +579,14 @@
         noise.start();
         noise.stop(ctx.currentTime + 3.5);
       } catch (e) {
-        console.warn("音訊播放被限制", e);
+        console.warn("飛機音效播放失敗", e);
       }
     }
 
     function playPhoneVibrateSound() {
       try {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        const ctx = new AudioCtx();
+        initAudioGraph();
+        const ctx = audioCtx;
 
         const box = document.getElementById("dialogue-box");
         box.classList.add("vibrate-box");
@@ -582,7 +618,7 @@
         triggerVibeBurst(ctx.currentTime);
         triggerVibeBurst(ctx.currentTime + 0.35);
       } catch (e) {
-        console.warn("音訊播放被限制", e);
+        console.warn("震動音效播放失敗", e);
       }
     }
 
@@ -702,9 +738,9 @@
       intro_msg: {
         speaker: "前女友的訊息",
         text: "「我沒想過三年後我還會因為你掉眼淚，好笑了」",
-        bg: "assets/chat.jpg",              // 切換為前女友聊天室截圖[cite: 10]
+        bg: "assets/chat.jpg",
         character: null,
-        onEnter: () => playBgm(),           // 播放感傷 BGM
+        onEnter: () => playBgm(),
         nextNode: "intro_8"
       },
       intro_8: {
@@ -717,7 +753,7 @@
       intro_9: {
         speaker: "隔壁老王",
         text: "但我的手還不自覺地收起行李",
-        bg: "assets/room.jpg",
+        bg: "assets/chat.jpg",
         character: null,
         nextNode: "intro_10"
       },
@@ -733,6 +769,7 @@
         text: "這次回來就只有一個目的",
         bg: "assets/airport.jpg",
         character: "assets/laowang.png",
+        onEnter: () => fadeOutBgm(2.5), // 啟動 2.5 秒 Web Audio 平滑淡出
         nextNode: "intro_12"
       },
       intro_12: {
@@ -866,6 +903,7 @@
     }
 
     function startGame() {
+      initAudioGraph();
       startMenu.classList.add("hidden");
       achieveScreen.classList.add("hidden");
       phoneInteractiveLayer.classList.remove("active");
@@ -886,7 +924,7 @@
       clearInterval(typeTimer);
       clearTimeout(cutsceneTimer);
       isTyping = false;
-      stopBgm();
+      stopBgmInstant();
       cutsceneLayer.classList.add("hidden");
       phoneInteractiveLayer.classList.remove("active");
       choiceLayer.classList.add("hidden");
@@ -1044,7 +1082,7 @@
       const node = storyScript[currentNodeKey];
       if (isTyping) {
         completeTextInstantly();
-      } else if (node.nextNode && (!node.choices || node.choices.length === 0) && !node.requirePhoneClick) {
+      } else if (node.nextNode && (!node.choices || node.choices.length === 0)) {
         renderNode(node.nextNode);
       }
     });
