@@ -225,7 +225,7 @@
       animation: planeLandingMotion 3.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     }
 
-    /* 手機互動圖層：局限在對話框上方 (bottom: 135px)，不壓到對話框 */
+    /* 手機互動圖層 */
     #phone-interactive-layer {
       position: absolute;
       top: 0;
@@ -309,7 +309,7 @@
       animation: phoneShake 0.15s ease-in-out infinite;
     }
 
-    /* 對話框區域：提升 z-index 確保永遠在最上層 */
+    /* 對話框區域 */
     #dialogue-box {
       position: relative;
       background: rgba(15, 23, 42, 0.95);
@@ -335,14 +335,56 @@
       min-height: 50px;
     }
 
-    /* 右上控制列 */
+    /* 右上控制按鈕列 (整合音量調整條) */
     #control-bar {
       position: absolute;
       top: 14px;
       right: 16px;
       display: flex;
-      gap: 8px;
+      align-items: center;
+      gap: 10px;
       z-index: 60;
+    }
+
+    .volume-control-box {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+
+    .volume-icon {
+      font-size: 0.85rem;
+      user-select: none;
+    }
+
+    .volume-slider {
+      width: 75px;
+      height: 4px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: #475569;
+      border-radius: 2px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    .volume-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #38bdf8;
+      cursor: pointer;
+      transition: transform 0.1s;
+    }
+
+    .volume-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.25);
     }
 
     .ctrl-btn {
@@ -389,13 +431,16 @@
 <body>
 
   <div id="game-container">
+    <!-- 背景音樂 Audio 播放器 -->
+    <audio id="bgm-player" src="assets/bgm.mp3" loop preload="auto"></audio>
+
     <div id="background-layer"></div>
 
     <div id="character-layer">
       <img id="character-img" src="" alt="角色立繪">
     </div>
 
-    <!-- 手機互動圖層：對齊於對話框上方 -->
+    <!-- 手機互動圖層 -->
     <div id="phone-interactive-layer">
       <div class="phone-wrapper">
         <img src="assets/phone.png" alt="手機螢幕">
@@ -423,7 +468,12 @@
       <img id="plane-sprite" src="assets/plane.png" alt="飛機降落">
     </div>
 
+    <!-- 控制列：音量拉條 + 快捷鍵 -->
     <div id="control-bar">
+      <div class="volume-control-box" title="背景音樂音量">
+        <span class="volume-icon">🔊</span>
+        <input type="range" id="volume-slider" class="volume-slider" min="0" max="1" step="0.05" value="0.7">
+      </div>
       <button id="home-btn" class="ctrl-btn">主選單</button>
       <button id="back-btn" class="ctrl-btn">BACK</button>
       <button id="skip-btn" class="ctrl-btn">SKIP</button>
@@ -438,6 +488,29 @@
   </div>
 
   <script>
+    // ===== 音訊控制系統 =====
+    const bgmPlayer = document.getElementById("bgm-player");
+    const volumeSlider = document.getElementById("volume-slider");
+
+    bgmPlayer.volume = parseFloat(volumeSlider.value);
+
+    volumeSlider.addEventListener("input", (e) => {
+      bgmPlayer.volume = parseFloat(e.target.value);
+    });
+
+    function playBgm() {
+      if (bgmPlayer.paused) {
+        bgmPlayer.play().catch(err => {
+          console.warn("BGM 自動播放被限制", err);
+        });
+      }
+    }
+
+    function stopBgm() {
+      bgmPlayer.pause();
+      bgmPlayer.currentTime = 0;
+    }
+
     function playPlaneLandingSound() {
       try {
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -513,6 +586,7 @@
       }
     }
 
+    // ===== 成就系統 =====
     const ACHIEVEMENTS = [
       {
         id: "achieve_ex",
@@ -564,6 +638,7 @@
       });
     }
 
+    // ===== 劇本資料庫 =====
     const storyScript = {
       intro_1: {
         speaker: "隔壁老王",
@@ -627,14 +702,15 @@
       intro_msg: {
         speaker: "前女友的訊息",
         text: "「我沒想過三年後我還會因為你掉眼淚，好笑了」",
-        bg: "assets/room.jpg",
+        bg: "assets/chat.jpg",              // 切換為前女友聊天室截圖[cite: 10]
         character: null,
+        onEnter: () => playBgm(),           // 播放感傷 BGM
         nextNode: "intro_8"
       },
       intro_8: {
         speaker: "隔壁老王",
         text: "雖然我的心裡知道我們的戀情已經停止在三年前的夏天",
-        bg: "assets/room.jpg",
+        bg: "assets/chat.jpg",
         character: null,
         nextNode: "intro_9"
       },
@@ -810,6 +886,7 @@
       clearInterval(typeTimer);
       clearTimeout(cutsceneTimer);
       isTyping = false;
+      stopBgm();
       cutsceneLayer.classList.add("hidden");
       phoneInteractiveLayer.classList.remove("active");
       choiceLayer.classList.add("hidden");
