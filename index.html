@@ -225,14 +225,14 @@
       animation: planeLandingMotion 3.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     }
 
-    /* 手機互動圖層 */
+    /* 手機互動圖層：局限在對話框上方 (bottom: 135px)，不壓到對話框 */
     #phone-interactive-layer {
       position: absolute;
       top: 0;
       left: 0;
       width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.55);
+      bottom: 135px;
+      background: rgba(0, 0, 0, 0.45);
       z-index: 25;
       display: flex;
       justify-content: center;
@@ -240,6 +240,7 @@
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.5s ease-in-out;
+      padding: 16px 0;
     }
 
     #phone-interactive-layer.active {
@@ -249,12 +250,12 @@
 
     .phone-wrapper {
       position: relative;
-      height: 82%;
-      max-height: 440px;
-      border-radius: 36px;
-      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8), 0 0 0 4px #222;
+      height: 100%;
+      max-height: 360px;
+      border-radius: 30px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.8), 0 0 0 3px #222;
       overflow: hidden;
-      transform: translateY(20px);
+      transform: translateY(15px);
       transition: transform 0.4s ease-out;
     }
 
@@ -276,7 +277,7 @@
       width: 91%;
       height: 12.5%;
       cursor: pointer;
-      border-radius: 16px;
+      border-radius: 14px;
       transition: background 0.2s, box-shadow 0.2s;
       animation: notifPulse 1.8s infinite;
     }
@@ -290,7 +291,7 @@
         box-shadow: 0 0 0 0 rgba(225, 48, 108, 0.4);
       }
       50% {
-        box-shadow: 0 0 0 6px rgba(225, 48, 108, 0.7);
+        box-shadow: 0 0 0 5px rgba(225, 48, 108, 0.7);
       }
     }
 
@@ -308,15 +309,15 @@
       animation: phoneShake 0.15s ease-in-out infinite;
     }
 
-    /* 對話框區域 */
+    /* 對話框區域：提升 z-index 確保永遠在最上層 */
     #dialogue-box {
       position: relative;
-      background: rgba(15, 23, 42, 0.92);
+      background: rgba(15, 23, 42, 0.95);
       border-top: 2px solid #38bdf8;
-      padding: 20px 24px 16px;
+      padding: 18px 24px 16px;
       min-height: 130px;
       cursor: pointer;
-      z-index: 10;
+      z-index: 40;
     }
 
     #speaker-name {
@@ -341,7 +342,7 @@
       right: 16px;
       display: flex;
       gap: 8px;
-      z-index: 20;
+      z-index: 60;
     }
 
     .ctrl-btn {
@@ -377,7 +378,7 @@
       justify-content: center;
       align-items: center;
       gap: 16px;
-      z-index: 30;
+      z-index: 70;
     }
 
     .hidden {
@@ -394,7 +395,7 @@
       <img id="character-img" src="" alt="角色立繪">
     </div>
 
-    <!-- 手機互動圖層：改用 assets/phone.png -->
+    <!-- 手機互動圖層：對齊於對話框上方 -->
     <div id="phone-interactive-layer">
       <div class="phone-wrapper">
         <img src="assets/phone.png" alt="手機螢幕">
