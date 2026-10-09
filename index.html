@@ -47,11 +47,11 @@
       background-size: cover;
       background-position: center;
       opacity: 0;
-      transition: opacity 1s ease-in-out;
+      transition: opacity 0.8s ease-in-out;
       z-index: 1;
     }
 
-    /* 角色立繪層 (支援平滑淡入淡出) */
+    /* 角色立繪層 */
     #character-layer {
       position: absolute;
       bottom: 0px;
@@ -63,7 +63,7 @@
       align-items: flex-end;
       justify-content: center;
       opacity: 0;
-      transition: opacity 0.8s ease-in-out;
+      transition: opacity 0.6s ease-in-out;
       z-index: 2;
     }
 
@@ -180,7 +180,7 @@
       color: #94a3b8;
     }
 
-    /* 開場飛機動畫層 */
+    /* 開場動畫層 */
     #cutscene-layer {
       position: absolute;
       top: 0;
@@ -227,6 +227,20 @@
       animation: planeLandingMotion 3.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
     }
 
+    /* 手機震動對話框特效 */
+    @keyframes phoneShake {
+      0%, 100% { transform: translate(0, 0); }
+      15% { transform: translate(-3px, 2px); }
+      30% { transform: translate(3px, -2px); }
+      45% { transform: translate(-2px, -2px); }
+      60% { transform: translate(2px, 2px); }
+      75% { transform: translate(-1px, 1px); }
+    }
+
+    .vibrate-box {
+      animation: phoneShake 0.15s ease-in-out infinite;
+    }
+
     /* 對話框區域 */
     #dialogue-box {
       position: relative;
@@ -236,6 +250,7 @@
       min-height: 130px;
       cursor: pointer;
       z-index: 10;
+      transition: border-color 0.2s;
     }
 
     #speaker-name {
@@ -253,7 +268,7 @@
       min-height: 50px;
     }
 
-    /* 控制按鈕 */
+    /* 右上控制按鈕列 */
     #control-bar {
       position: absolute;
       top: 14px;
@@ -271,10 +286,15 @@
       padding: 5px 12px;
       border-radius: 4px;
       cursor: pointer;
-      transition: background 0.2s;
+      transition: background 0.2s, opacity 0.2s;
     }
 
-    .ctrl-btn:hover {
+    .ctrl-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+    }
+
+    .ctrl-btn:not(:disabled):hover {
       background: rgba(255, 255, 255, 0.25);
     }
 
@@ -333,9 +353,10 @@
       <img id="plane-sprite" src="assets/plane.png" alt="飛機降落">
     </div>
 
-    <!-- 控制列 -->
+    <!-- 控制列：新增 BACK 按鈕在 SKIP 旁邊 -->
     <div id="control-bar">
       <button id="home-btn" class="ctrl-btn">主選單</button>
+      <button id="back-btn" class="ctrl-btn">BACK</button>
       <button id="skip-btn" class="ctrl-btn">SKIP</button>
     </div>
 
@@ -350,7 +371,7 @@
   </div>
 
   <script>
-    // ===== 音效合成 =====
+    // ===== Web Audio 聲音合成系統 =====
     function playPlaneLandingSound() {
       try {
         const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -383,7 +404,48 @@
         noise.start();
         noise.stop(ctx.currentTime + 3.5);
       } catch (e) {
-        console.warn("音訊播放被瀏覽器限制", e);
+        console.warn("音訊播放被限制", e);
+      }
+    }
+
+    // 手機震動音效合成 (雙段嗡嗡聲) + 對話框微震特效
+    function playPhoneVibrateSound() {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioCtx();
+
+        // 觸發對話框視覺震動
+        const box = document.getElementById("dialogue-box");
+        box.classList.add("vibrate-box");
+        setTimeout(() => box.classList.remove("vibrate-box"), 650);
+
+        function triggerVibeBurst(startTime) {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+
+          osc.type = "sawtooth";
+          osc.frequency.setValueAtTime(125, startTime);
+
+          const filter = ctx.createBiquadFilter();
+          filter.type = "lowpass";
+          filter.frequency.setValueAtTime(260, startTime);
+
+          gain.gain.setValueAtTime(0.01, startTime);
+          gain.gain.linearRampToValueAtTime(0.35, startTime + 0.05);
+          gain.gain.linearRampToValueAtTime(0.01, startTime + 0.25);
+
+          osc.connect(filter);
+          filter.connect(gain);
+          gain.connect(ctx.destination);
+
+          osc.start(startTime);
+          osc.stop(startTime + 0.25);
+        }
+
+        triggerVibeBurst(ctx.currentTime);
+        triggerVibeBurst(ctx.currentTime + 0.35);
+      } catch (e) {
+        console.warn("音訊播放被限制", e);
       }
     }
 
@@ -421,8 +483,8 @@
 
     function renderAchievementList() {
       const unlocked = getUnlockedAchievements();
-      const achieveItemsContainer = document.getElementById("achieve-items-container");
-      achieveItemsContainer.innerHTML = "";
+      const container = document.getElementById("achieve-items-container");
+      container.innerHTML = "";
 
       ACHIEVEMENTS.forEach(ach => {
         const isUnlocked = unlocked.includes(ach.id);
@@ -435,17 +497,17 @@
             <p>${isUnlocked ? ach.desc : "尚未解鎖此成就"}</p>
           </div>
         `;
-        achieveItemsContainer.appendChild(item);
+        container.appendChild(item);
       });
     }
 
-    // ===== 劇本節點庫 (支援 bg 與 character 視覺設定) =====
+    // ===== 劇本資料庫 =====
     const storyScript = {
       intro_1: {
         speaker: "隔壁老王",
         text: "我叫隔壁老王",
-        bg: "assets/airport.jpg",          // 漸出第一張：機場背景
-        character: "assets/laowang.png",    // 疊加第二張：老王立繪
+        bg: "assets/airport.jpg",
+        character: "assets/laowang.png",
         nextNode: "intro_2"
       },
       intro_2: {
@@ -472,69 +534,92 @@
       intro_flashback: {
         speaker: "旁白",
         text: "「在不久之前」",
-        bg: null,                          // 進入回憶：背景淡出全黑
-        character: null,                   // 立繪淡出
+        bg: null,
+        character: null,
         nextNode: "intro_5"
       },
       intro_5: {
         speaker: "隔壁老王",
         text: "我獨自在國外的租屋處時",
+        bg: "assets/room.jpg",              // 租屋處背景
+        character: null,
         nextNode: "intro_6"
       },
       intro_6: {
         speaker: "隔壁老王",
         text: "手機突然跳出了一則訊息",
+        bg: "assets/room.jpg",
+        character: null,
+        onEnter: () => playPhoneVibrateSound(), // 手機震動音效與畫面震動
         nextNode: "intro_7"
       },
       intro_7: {
         speaker: "隔壁老王",
         text: "是那個一直偷偷背著現任男友跟我聯絡的前女友傳來的訊息",
+        bg: "assets/room.jpg",
+        character: null,
         nextNode: "intro_msg"
       },
       intro_msg: {
         speaker: "前女友的訊息",
         text: "「我沒想過三年後我還會因為你掉眼淚，好笑了」",
+        bg: "assets/room.jpg",
+        character: null,
         nextNode: "intro_8"
       },
       intro_8: {
         speaker: "隔壁老王",
         text: "雖然我的心裡知道我們的戀情已經停止在三年前的夏天",
+        bg: "assets/room.jpg",
+        character: null,
         nextNode: "intro_9"
       },
       intro_9: {
         speaker: "隔壁老王",
         text: "但我的手還不自覺地收起行李",
+        bg: "assets/room.jpg",
+        character: null,
         nextNode: "intro_10"
       },
       intro_10: {
         speaker: "隔壁老王",
         text: "所以一直在國外拈花惹草的我",
+        bg: "assets/room.jpg",
+        character: null,
         nextNode: "intro_11"
       },
       intro_11: {
         speaker: "隔壁老王",
         text: "這次回來就只有一個目的",
+        bg: "assets/airport.jpg",
+        character: "assets/laowang.png",
         nextNode: "intro_12"
       },
       intro_12: {
         speaker: "隔壁老王",
         text: "「奪回屬於我的榮耀!!!」",
+        bg: "assets/airport.jpg",
+        character: "assets/laowang.png",
         nextNode: "intro_13"
       },
       intro_13: {
         speaker: "隔壁老王",
         text: "當然還有吃一碗香噴噴的鴨肉飯",
+        bg: "assets/airport.jpg",
+        character: "assets/laowang.png",
         nextNode: "intro_14"
       },
       intro_14: {
         speaker: "隔壁老王",
         text: "畢竟我把輸家當早餐吃",
+        bg: "assets/airport.jpg",
+        character: "assets/laowang.png",
         nextNode: "choice_hub"
       },
       choice_hub: {
         speaker: "隔壁老王",
         text: "不知道現在要幹嘛呢",
-        bg: "assets/airport.jpg",          // 回到機場現場
+        bg: "assets/airport.jpg",
         character: "assets/laowang.png",
         choices: [
           { text: "去找前女友", nextNode: "route_ex" },
@@ -564,7 +649,7 @@
       }
     };
 
-    // ===== 狀態與元素 =====
+    // ===== 狀態變數與歷史紀錄堆疊 =====
     let currentNodeKey = "intro_1";
     let isTyping = false;
     let typeTimer = null;
@@ -572,6 +657,7 @@
     let cutsceneTimer = null;
     let currentBgSrc = "";
     let currentCharacterSrc = "";
+    let historyStack = []; // 歷史節點紀錄，用於回上一頁
 
     const startMenu = document.getElementById("start-menu");
     const achieveScreen = document.getElementById("achieve-screen");
@@ -585,11 +671,11 @@
     const textEl = document.getElementById("dialogue-text");
     const choiceLayer = document.getElementById("choice-layer");
     const skipBtn = document.getElementById("skip-btn");
+    const backBtn = document.getElementById("back-btn");
     const homeBtn = document.getElementById("home-btn");
 
-    // ===== 視覺圖層更新 (背景與立繪淡入淡出) =====
+    // ===== 視覺圖層更新 =====
     function updateVisualLayers(node) {
-      // 1. 更新背景
       if (node.bg) {
         if (currentBgSrc !== node.bg) {
           currentBgSrc = node.bg;
@@ -601,7 +687,6 @@
         bgLayer.style.opacity = "0";
       }
 
-      // 2. 更新立繪
       if (node.character) {
         if (currentCharacterSrc !== node.character) {
           currentCharacterSrc = node.character;
@@ -640,14 +725,15 @@
       startMenu.classList.add("hidden");
       achieveScreen.classList.add("hidden");
 
-      // 重置背景與立繪為全黑
       currentBgSrc = "";
       currentCharacterSrc = "";
       bgLayer.style.opacity = "0";
       charLayer.style.opacity = "0";
+      historyStack = [];
+      updateBackButtonState();
 
       playIntroCutscene(() => {
-        renderNode("intro_1");
+        renderNode("intro_1", false);
       });
     }
 
@@ -661,20 +747,34 @@
       charLayer.style.opacity = "0";
       currentBgSrc = "";
       currentCharacterSrc = "";
+      historyStack = [];
       startMenu.classList.remove("hidden");
     }
 
-    function renderNode(nodeKey) {
+    function updateBackButtonState() {
+      backBtn.disabled = historyStack.length === 0;
+    }
+
+    // 渲染節點 (pushHistory 控制是否推入上一頁堆疊)
+    function renderNode(nodeKey, pushHistory = true) {
       const node = storyScript[nodeKey];
       if (!node) return;
+
+      if (pushHistory && currentNodeKey) {
+        historyStack.push(currentNodeKey);
+      }
+      updateBackButtonState();
 
       currentNodeKey = nodeKey;
       speakerEl.textContent = node.speaker || "";
       choiceLayer.classList.add("hidden");
       choiceLayer.innerHTML = "";
 
-      // 更新畫面背景與老王立繪
       updateVisualLayers(node);
+
+      if (typeof node.onEnter === "function") {
+        node.onEnter();
+      }
 
       if (node.unlockAchievement) {
         unlockAchievement(node.unlockAchievement);
@@ -685,6 +785,15 @@
           showChoices(node.choices);
         }
       });
+    }
+
+    // 回到上一頁邏輯
+    function goBack() {
+      if (historyStack.length === 0) return;
+      clearInterval(typeTimer);
+      isTyping = false;
+      const prevNodeKey = historyStack.pop();
+      renderNode(prevNodeKey, false);
     }
 
     function typewriter(fullText, onComplete) {
@@ -743,6 +852,11 @@
 
     homeBtn.addEventListener("click", returnToMenu);
 
+    backBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      goBack();
+    });
+
     dialogueBox.addEventListener("click", () => {
       const node = storyScript[currentNodeKey];
 
@@ -766,7 +880,7 @@
       if (!cutsceneLayer.classList.contains("hidden")) {
         clearTimeout(cutsceneTimer);
         cutsceneLayer.classList.add("hidden");
-        renderNode("intro_1");
+        renderNode("intro_1", false);
         return;
       }
 
