@@ -475,7 +475,7 @@
   </div>
 
   <script>
-    // ===== Web Audio API 音訊圖 =====
+    // ===== 音訊控制系統 =====
     const bgmPlayer = document.getElementById("bgm-player");
     const volumeSlider = document.getElementById("volume-slider");
 
@@ -620,13 +620,13 @@
       }
     }
 
-    // ===== 全新成就系統 =====
+    // ===== 成就系統資料庫 =====
     const ACHIEVEMENTS = [
       {
-        id: "achieve_bad_coward",
-        title: "無膽匪類",
-        desc: "在旅館前臨陣脫逃，被大耳狗光速封鎖。",
-        icon: "🐔"
+        id: "achieve_duck_rice",
+        title: "鴨肉飯比較好吃",
+        desc: "大耳狗決定跟現任好好過，老王默默選擇了鴨肉飯。",
+        icon: "🦆"
       },
       {
         id: "achieve_bear_sub",
@@ -684,9 +684,8 @@
       });
     }
 
-    // ===== 劇本資料庫 (含事件一至四與全部分歧分支) =====
+    // ===== 劇本資料庫 =====
     const storyScript = {
-      // --- 開場回憶 ---
       intro_1: {
         speaker: "隔壁老王",
         text: "我叫隔壁老王",
@@ -805,7 +804,7 @@
         nextNode: "event1_start"
       },
 
-      // --- 事件一：要不要出去騷兩圈 ---
+      // --- 事件一 ---
       event1_start: {
         speaker: "隔壁老王",
         text: "吃完鴨肉飯後，我滑開 IG，主動敲了大耳狗。",
@@ -815,7 +814,7 @@
       },
       event1_msg1: {
         speaker: "隔壁老王",
-        text: "「我回台灣了，要不要出去騷兩圈？」",
+        text: "「我回台灣了，要不要出來騷兩圈？」",
         bg: "assets/airport.jpg",
         character: "assets/laowang.png",
         nextNode: "event1_reply1"
@@ -826,35 +825,65 @@
         bg: "assets/airport.jpg",
         character: "assets/laowang.png",
         choices: [
-          { text: "到旅館敘敘舊", nextNode: "event2_start" },
-          { text: "算了，不要", nextNode: "bad_end_coward" }
+          { text: "到旅館敘敘舊", nextNode: "event1_hotel_meet" },
+          { text: "算了，不要", nextNode: "bad_end_duck_rice" }
         ]
       },
-      bad_end_coward: {
+      bad_end_duck_rice: {
         speaker: "大耳狗",
-        text: "「滾，浪費老娘時間。不用再聯絡了。」",
+        text: "「我還是決定要跟現任男友好好過日子。」",
         bg: "assets/airport.jpg",
         character: null,
-        nextNode: "bad_end_coward_2"
+        nextNode: "bad_end_duck_rice_2"
       },
-      bad_end_coward_2: {
+      bad_end_duck_rice_2: {
         speaker: "系統",
-        text: "【BAD ENDING：無膽匪類】\n大耳狗將你光速封鎖，老王連家都沒摸到就灰頭土臉回國外。",
-        unlockAchievement: "achieve_bad_coward",
+        text: "【章節結束：鴨肉飯比較好吃】\n大耳狗回到了現任的懷抱，老王默默點了一碗鴨肉飯，果然還是飯最對味。",
+        unlockAchievement: "achieve_duck_rice",
         onNext: () => returnToMenu()
       },
 
-      // --- 事件二：和好打擊與戰鬥冰 ---
+      // --- 事件一赴約到事件二過渡期 (偷情時光) ---
+      event1_hotel_meet: {
+        speaker: "隔壁老王",
+        text: "沒想到，大耳狗真的答應了。",
+        bg: "assets/room.jpg",
+        character: "assets/laowang.png",
+        nextNode: "event1_night"
+      },
+      event1_night: {
+        speaker: "隔壁老王",
+        text: "那一晚在旅館裡，伴隨著熟悉的香水味，我們一起度過了一個愉快的夜晚。",
+        bg: "assets/room.jpg",
+        character: null,
+        nextNode: "event1_affair_1"
+      },
+      event1_affair_1: {
+        speaker: "隔壁老王",
+        text: "在此之後，我們心照不宣地維持著不說開、卻頻繁約會的偷情時光。",
+        bg: "assets/room.jpg",
+        character: "assets/laowang.png",
+        nextNode: "event1_affair_2"
+      },
+      event1_affair_2: {
+        speaker: "隔壁老王",
+        text: "看著她背著男友傳來的甜蜜訊息，我一度以為，我的榮耀已經奪回來了。",
+        bg: "assets/room.jpg",
+        character: "assets/laowang.png",
+        nextNode: "event2_start"
+      },
+
+      // --- 事件二 ---
       event2_start: {
         speaker: "隔壁老王",
-        text: "本以為劇本會照著我的節奏走……",
+        text: "直到那一天的到來……",
         bg: "assets/room.jpg",
         character: "assets/laowang.png",
         nextNode: "event2_reconcile"
       },
       event2_reconcile: {
         speaker: "隔壁老王",
-        text: "結果隔天打開 IG，她發了跟現任男友甜蜜和好的抱抱限動。",
+        text: "她跟男友大吵一架後，居然神速和好，還發了甜蜜合照的限時動態。",
         bg: "assets/room.jpg",
         character: "assets/laowang.png",
         nextNode: "event2_caption"
@@ -868,14 +897,14 @@
       },
       event2_confused: {
         speaker: "隔壁老王",
-        text: "……蛤？？？前一天還說三年後為我掉眼淚，今天就復合？",
+        text: "……蛤？？？前幾天在床上還抱得那麼緊，今天就跟男友放閃？？",
         bg: "assets/room.jpg",
         character: "assets/laowang.png",
         nextNode: "event2_bear_prompt"
       },
       event2_bear_prompt: {
         speaker: "隔壁老王",
-        text: "心態徹底炸裂的我，決定打開交友軟體找人療傷。",
+        text: "心態徹底炸裂的我，氣得打開交友軟體找人療傷。",
         bg: "assets/room.jpg",
         character: "assets/laowang.png",
         nextNode: "event2_bear_msg"
@@ -925,7 +954,7 @@
         onNext: () => returnToMenu()
       },
 
-      // --- 事件三：瘋狂動物城之約 ---
+      // --- 事件三 ---
       event3_start: {
         speaker: "隔壁老王",
         text: "不行，把輸家當早餐吃的我，絕不能在戰鬥冰店認輸！",
@@ -978,7 +1007,7 @@
         onNext: () => returnToMenu()
       },
 
-      // --- 事件四：喝醉電話 ---
+      // --- 事件四 ---
       event4_start: {
         speaker: "隔壁老王",
         text: "電影散場後的那個週末，凌晨兩點。",
