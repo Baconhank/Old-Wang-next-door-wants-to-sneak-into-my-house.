@@ -404,7 +404,7 @@
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0, 0, 0, 0.5);
+      background: rgba(0, 0, 0, 0.65);
       display: flex;
       flex-direction: column;
       justify-content: center;
@@ -475,7 +475,7 @@
   </div>
 
   <script>
-    // ===== Web Audio API 串接 BGM (支援無卡頓線性淡入淡出) =====
+    // ===== Web Audio API 音訊圖 =====
     const bgmPlayer = document.getElementById("bgm-player");
     const volumeSlider = document.getElementById("volume-slider");
 
@@ -517,7 +517,6 @@
       }
     }
 
-    // 真正平滑的 2.5 秒淡出邏輯
     function fadeOutBgm(duration = 2.5) {
       if (!audioCtx || !bgmGainNode || bgmPlayer.paused) return;
 
@@ -546,7 +545,6 @@
       bgmPlayer.currentTime = 0;
     }
 
-    // ===== 飛機與震動音效 =====
     function playPlaneLandingSound() {
       try {
         initAudioGraph();
@@ -622,19 +620,31 @@
       }
     }
 
-    // ===== 成就系統 =====
+    // ===== 全新成就系統 =====
     const ACHIEVEMENTS = [
       {
-        id: "achieve_ex",
-        title: "電影之約",
-        desc: "決定約前女友去看電影。",
-        icon: "🎬"
+        id: "achieve_bad_coward",
+        title: "無膽匪類",
+        desc: "在旅館前臨陣脫逃，被大耳狗光速封鎖。",
+        icon: "🐔"
       },
       {
-        id: "achieve_food",
-        title: "老饕回歸",
-        desc: "回國第一件事就是怒吃當歸鴨肉飯！",
-        icon: "🍲"
+        id: "achieve_bear_sub",
+        title: "新世界的大門",
+        desc: "跟 178 特級亞大熊男交往，成功被開發成騷0。",
+        icon: "🌈"
+      },
+      {
+        id: "achieve_righteous",
+        title: "正直的男人",
+        desc: "在大耳狗想當壞女人時義正嚴詞拒絕，守護道德底線。",
+        icon: "🛡️"
+      },
+      {
+        id: "achieve_waver",
+        title: "夜半的動搖",
+        desc: "深夜聽見大耳狗醉後的真心告白，偷家大戰邁向高潮。",
+        icon: "🍷"
       }
     ];
 
@@ -674,8 +684,9 @@
       });
     }
 
-    // ===== 劇本資料庫 =====
+    // ===== 劇本資料庫 (含事件一至四與全部分歧分支) =====
     const storyScript = {
+      // --- 開場回憶 ---
       intro_1: {
         speaker: "隔壁老王",
         text: "我叫隔壁老王",
@@ -728,7 +739,7 @@
       },
       intro_7: {
         speaker: "隔壁老王",
-        text: "是那個一直偷偷背著現任男友跟我聯絡的前女友傳來的訊息\n（請點擊手機上的 Instagram 通知讀取）",
+        text: "是那個一直偷偷背著現任男友跟我聯絡的大耳狗傳來的訊息\n（請點擊手機上的 Instagram 通知讀取）",
         bg: "assets/room.jpg",
         character: null,
         showPhone: true,
@@ -736,7 +747,7 @@
         nextNode: "intro_msg"
       },
       intro_msg: {
-        speaker: "前女友的訊息",
+        speaker: "大耳狗的訊息",
         text: "「我沒想過三年後我還會因為你掉眼淚，好笑了」",
         bg: "assets/chat.jpg",
         character: null,
@@ -769,7 +780,7 @@
         text: "這次回來就只有一個目的",
         bg: "assets/airport.jpg",
         character: "assets/laowang.png",
-        onEnter: () => fadeOutBgm(2.5), // 啟動 2.5 秒 Web Audio 平滑淡出
+        onEnter: () => fadeOutBgm(2.5),
         nextNode: "intro_12"
       },
       intro_12: {
@@ -791,41 +802,236 @@
         text: "畢竟我把輸家當早餐吃",
         bg: "assets/airport.jpg",
         character: "assets/laowang.png",
-        nextNode: "choice_hub"
+        nextNode: "event1_start"
       },
-      choice_hub: {
+
+      // --- 事件一：要不要出去騷兩圈 ---
+      event1_start: {
         speaker: "隔壁老王",
-        text: "不知道現在要幹嘛呢",
+        text: "吃完鴨肉飯後，我滑開 IG，主動敲了大耳狗。",
+        bg: "assets/airport.jpg",
+        character: "assets/laowang.png",
+        nextNode: "event1_msg1"
+      },
+      event1_msg1: {
+        speaker: "隔壁老王",
+        text: "「我回台灣了，要不要出去騷兩圈？」",
+        bg: "assets/airport.jpg",
+        character: "assets/laowang.png",
+        nextNode: "event1_reply1"
+      },
+      event1_reply1: {
+        speaker: "大耳狗",
+        text: "「神經病喔，你現在在哪裡？」",
         bg: "assets/airport.jpg",
         character: "assets/laowang.png",
         choices: [
-          { text: "去找前女友", nextNode: "route_ex" },
-          { text: "吃鴨肉飯", nextNode: "route_food" }
+          { text: "到旅館敘敘舊", nextNode: "event2_start" },
+          { text: "算了，不要", nextNode: "bad_end_coward" }
         ]
       },
-      route_ex: {
-        speaker: "隔壁老王",
-        text: "那約她去看個電影好了",
+      bad_end_coward: {
+        speaker: "大耳狗",
+        text: "「滾，浪費老娘時間。不用再聯絡了。」",
         bg: "assets/airport.jpg",
-        character: "assets/laowang.png",
-        unlockAchievement: "achieve_ex",
-        nextNode: "end"
+        character: null,
+        nextNode: "bad_end_coward_2"
       },
-      route_food: {
-        speaker: "隔壁老王",
-        text: "好主意！巷口那間當歸鴨肉飯我朝思暮想好久了，走起！",
-        bg: "assets/airport.jpg",
-        character: "assets/laowang.png",
-        unlockAchievement: "achieve_food",
-        nextNode: "end"
-      },
-      end: {
+      bad_end_coward_2: {
         speaker: "系統",
-        text: "【章節結束】點擊對話框返回起始選單。",
+        text: "【BAD ENDING：無膽匪類】\n大耳狗將你光速封鎖，老王連家都沒摸到就灰頭土臉回國外。",
+        unlockAchievement: "achieve_bad_coward",
+        onNext: () => returnToMenu()
+      },
+
+      // --- 事件二：和好打擊與戰鬥冰 ---
+      event2_start: {
+        speaker: "隔壁老王",
+        text: "本以為劇本會照著我的節奏走……",
+        bg: "assets/room.jpg",
+        character: "assets/laowang.png",
+        nextNode: "event2_reconcile"
+      },
+      event2_reconcile: {
+        speaker: "隔壁老王",
+        text: "結果隔天打開 IG，她發了跟現任男友甜蜜和好的抱抱限動。",
+        bg: "assets/room.jpg",
+        character: "assets/laowang.png",
+        nextNode: "event2_caption"
+      },
+      event2_caption: {
+        speaker: "大耳狗的限動",
+        text: "「雨過天晴，謝謝你包容我的小脾氣，我們會一直好好的❤️」",
+        bg: "assets/room.jpg",
+        character: null,
+        nextNode: "event2_confused"
+      },
+      event2_confused: {
+        speaker: "隔壁老王",
+        text: "……蛤？？？前一天還說三年後為我掉眼淚，今天就復合？",
+        bg: "assets/room.jpg",
+        character: "assets/laowang.png",
+        nextNode: "event2_bear_prompt"
+      },
+      event2_bear_prompt: {
+        speaker: "隔壁老王",
+        text: "心態徹底炸裂的我，決定打開交友軟體找人療傷。",
+        bg: "assets/room.jpg",
+        character: "assets/laowang.png",
+        nextNode: "event2_bear_msg"
+      },
+      event2_bear_msg: {
+        speaker: "178 特級亞大熊男",
+        text: "「寶寶，你終於肯理我了！想吃什麼？我都請你！」",
+        bg: "assets/room.jpg",
+        character: null,
+        nextNode: "event2_ice_shop"
+      },
+      event2_ice_shop: {
+        speaker: "隔壁老王",
+        text: "「走，去吃戰鬥冰。」",
+        bg: "assets/room.jpg",
+        character: "assets/laowang.png",
+        nextNode: "event2_ice_eating"
+      },
+      event2_ice_eating: {
+        speaker: "隔壁老王",
+        text: "在戰鬥冰的店裡，熊男溫柔地幫我挖著芒果，用深情的眼神看著滿腹委屈的我……",
+        bg: "assets/room.jpg",
+        character: null,
+        choices: [
+          { text: "我還是放不下大耳狗", nextNode: "event3_start" },
+          { text: "看著熊男厚實的胸膛，突然覺得女人很麻煩", nextNode: "special_end_bear" }
+        ]
+      },
+      special_end_bear: {
+        speaker: "隔壁老王",
+        text: "大耳狗算什麼？眼前的 178 特級亞大熊男寬厚又體貼，還會餵我吃戰鬥冰。",
+        bg: "assets/room.jpg",
+        character: null,
+        nextNode: "special_end_bear_2"
+      },
+      special_end_bear_2: {
+        speaker: "178 特級亞大熊男",
+        text: "「寶寶，以後你的下半生，交給我來照顧。」",
+        bg: "assets/room.jpg",
+        character: null,
+        nextNode: "special_end_bear_3"
+      },
+      special_end_bear_3: {
+        speaker: "系統",
+        text: "【特殊結局：跟熊男交往 被開發成騷0】\n那一夜，老王放下了偷家的執念，在大熊溫暖的懷抱中找到了全新自我。",
+        unlockAchievement: "achieve_bear_sub",
+        onNext: () => returnToMenu()
+      },
+
+      // --- 事件三：瘋狂動物城之約 ---
+      event3_start: {
+        speaker: "隔壁老王",
+        text: "不行，把輸家當早餐吃的我，絕不能在戰鬥冰店認輸！",
+        bg: "assets/airport.jpg",
+        character: "assets/laowang.png",
+        nextNode: "event3_movie_msg"
+      },
+      event3_movie_msg: {
+        speaker: "隔壁老王",
+        text: "過了一週，聽說《瘋狂動物城》重映，我傳訊息約她：『週六瘋狂動物城，去不去？』",
+        bg: "assets/airport.jpg",
+        character: "assets/laowang.png",
+        nextNode: "event3_reject_first"
+      },
+      event3_reject_first: {
+        speaker: "大耳狗",
+        text: "「不行啦，我男友會看定位，而且我們現在感情很好。」",
+        bg: "assets/airport.jpg",
+        character: "assets/laowang.png",
+        nextNode: "event3_bad_girl"
+      },
+      event3_bad_girl: {
+        speaker: "大耳狗",
+        text: "「……但偶爾，我也想當個壞女人。幾點？哪家影城？」",
+        bg: "assets/airport.jpg",
+        character: "assets/laowang.png",
+        choices: [
+          { text: "準時赴約，享受刺激", nextNode: "event4_start" },
+          { text: "嚴肅拒絕：請好好珍惜妳男友", nextNode: "righteous_end" }
+        ]
+      },
+      righteous_end: {
+        speaker: "隔壁老王",
+        text: "「妳這樣做對得起妳男友嗎？我雖然愛玩，但也是有底線的。電影妳自己看吧。」",
+        bg: "assets/airport.jpg",
+        character: "assets/laowang.png",
+        nextNode: "righteous_end_2"
+      },
+      righteous_end_2: {
+        speaker: "大耳狗",
+        text: "「……你居然教訓我？算我看錯你了，掰掰！」",
+        bg: "assets/airport.jpg",
+        character: null,
+        nextNode: "righteous_end_3"
+      },
+      righteous_end_3: {
+        speaker: "系統",
+        text: "【章節結束：正直的男人】\n你用浩然正氣擊退了壞女人大耳狗，榮耀或許沒奪回，但道德標桿立得高高的。",
+        unlockAchievement: "achieve_righteous",
+        onNext: () => returnToMenu()
+      },
+
+      // --- 事件四：喝醉電話 ---
+      event4_start: {
+        speaker: "隔壁老王",
+        text: "電影散場後的那個週末，凌晨兩點。",
+        bg: "assets/room.jpg",
+        character: null,
+        nextNode: "event4_vibe"
+      },
+      event4_vibe: {
+        speaker: "隔壁老王",
+        text: "手機在床頭瘋狂震動，螢幕亮起大耳狗的名字。",
+        bg: "assets/room.jpg",
+        character: null,
+        onEnter: () => playPhoneVibrateSound(),
+        nextNode: "event4_drunk1"
+      },
+      event4_drunk1: {
+        speaker: "大耳狗",
+        text: "「老王……你睡了嗎？我剛跟朋友喝完酒……現在腦子裡全是你。」",
+        bg: "assets/room.jpg",
+        character: null,
+        onEnter: () => playBgm(),
+        nextNode: "event4_drunk2"
+      },
+      event4_drunk2: {
+        speaker: "大耳狗",
+        text: "「我好想你……」",
+        bg: "assets/room.jpg",
+        character: null,
+        nextNode: "event4_drunk3"
+      },
+      event4_drunk3: {
+        speaker: "大耳狗",
+        text: "「我承認……我喝醉那天，我也動搖了。」",
+        bg: "assets/room.jpg",
+        character: null,
+        nextNode: "event4_climax"
+      },
+      event4_climax: {
+        speaker: "隔壁老王",
+        text: "聽著電話那頭微醺的呢喃，房間裡只剩冷氣的運轉聲。",
+        bg: "assets/room.jpg",
+        character: "assets/laowang.png",
+        nextNode: "event4_final"
+      },
+      event4_final: {
+        speaker: "系統",
+        text: "【章節高潮達成：夜半的動搖】\n大耳狗的防線徹底瓦解，這場隔壁老王偷家大計，未完待續……",
+        unlockAchievement: "achieve_waver",
         onNext: () => returnToMenu()
       }
     };
 
+    // ===== 遊戲流程管理 =====
     let currentNodeKey = "intro_1";
     let isTyping = false;
     let typeTimer = null;
@@ -1082,7 +1288,7 @@
       const node = storyScript[currentNodeKey];
       if (isTyping) {
         completeTextInstantly();
-      } else if (node.nextNode && (!node.choices || node.choices.length === 0)) {
+      } else if (node.nextNode && (!node.choices || node.choices.length === 0) && !node.requirePhoneClick) {
         renderNode(node.nextNode);
       }
     });
