@@ -50,25 +50,70 @@
       z-index: 1;
     }
 
+    /* 角色立繪層 (支援單角色與雙角色撲向動畫) */
     #character-layer {
       position: absolute;
       bottom: 0px;
-      left: 50%;
-      transform: translateX(-50%);
+      left: 0;
+      width: 100%;
       height: 82%;
       pointer-events: none;
       display: flex;
       align-items: flex-end;
       justify-content: center;
-      opacity: 0;
-      transition: opacity 0.6s ease-in-out;
       z-index: 2;
     }
 
-    #character-layer img {
+    .single-char {
       max-height: 100%;
       object-fit: contain;
       filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.6));
+      opacity: 0;
+      transition: opacity 0.6s ease-in-out;
+    }
+
+    /* 旅館撲向大耳狗專屬動畫結構 */
+    .pounce-scene {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    .pounce-target {
+      position: absolute;
+      right: 18%;
+      bottom: 2%;
+      max-height: 55%;
+      filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.6));
+      animation: targetFloat 1.5s ease-in-out infinite alternate;
+    }
+
+    .pounce-attacker {
+      position: absolute;
+      left: 5%;
+      bottom: 0;
+      max-height: 95%;
+      filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.6));
+      animation: pounceAction 0.9s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+    }
+
+    @keyframes targetFloat {
+      0% { transform: translateY(0); }
+      100% { transform: translateY(-8px); }
+    }
+
+    @keyframes pounceAction {
+      0% {
+        transform: translate(-150px, 40px) scale(0.9) rotate(-10deg);
+        opacity: 0;
+      }
+      50% {
+        opacity: 1;
+      }
+      100% {
+        transform: translate(160px, -20px) scale(1.08) rotate(6deg);
+        opacity: 1;
+      }
     }
 
     .overlay-screen {
@@ -425,9 +470,7 @@
 
     <div id="background-layer"></div>
 
-    <div id="character-layer">
-      <img id="character-img" src="" alt="角色立繪">
-    </div>
+    <div id="character-layer"></div>
 
     <div id="phone-interactive-layer">
       <div class="phone-wrapper">
@@ -852,6 +895,8 @@
       bad_end_duck_rice_2: {
         speaker: "系統",
         text: "【章節結束：鴨肉飯比較好吃】\n大耳狗回到了現任的懷抱，老王默默點了一碗鴨肉飯，果然還是飯最對味。",
+        bg: "assets/duck_rice.jpg",
+        character: null,
         unlockAchievement: "achieve_duck_rice",
         onNext: () => returnToMenu()
       },
@@ -860,29 +905,29 @@
       event1_hotel_meet: {
         speaker: "隔壁老王",
         text: "沒想到，大耳狗真的答應了。",
-        bg: "assets/room.jpg",
+        bg: "assets/airport.jpg",
         character: "assets/laowang.png",
         nextNode: "event1_night"
       },
       event1_night: {
         speaker: "隔壁老王",
         text: "那一晚在旅館裡，伴隨著熟悉的香水味，我們一起度過了一個愉快的夜晚。",
-        bg: "assets/room.jpg",
-        character: null,
+        bg: "assets/hotel.jpg",
+        pounceScene: true,
         nextNode: "event1_affair_1"
       },
       event1_affair_1: {
         speaker: "隔壁老王",
         text: "在此之後，我們心照不宣地維持著不說開、卻頻繁約會的偷情時光。",
-        bg: "assets/room.jpg",
+        bg: "assets/hotel.jpg",
         character: "assets/laowang.png",
         nextNode: "event1_affair_2"
       },
       event1_affair_2: {
         speaker: "隔壁老王",
         text: "看著她背著男友傳來的甜蜜訊息，我一度以為，我的榮耀已經奪回來了。",
-        bg: "assets/room.jpg",
-        character: "assets/laowang.png",
+        bg: "assets/hotel.jpg",
+        pounceScene: true,
         nextNode: "event2_start"
       },
 
@@ -1314,7 +1359,6 @@
     let currentFullText = "";
     let cutsceneTimer = null;
     let currentBgSrc = "";
-    let currentCharacterSrc = "";
     let historyStack = [];
 
     const startMenu = document.getElementById("start-menu");
@@ -1325,7 +1369,6 @@
     const igNotifHitbox = document.getElementById("ig-notif-hitbox");
     const bgLayer = document.getElementById("background-layer");
     const charLayer = document.getElementById("character-layer");
-    const charImg = document.getElementById("character-img");
     const dialogueBox = document.getElementById("dialogue-box");
     const speakerEl = document.getElementById("speaker-name");
     const textEl = document.getElementById("dialogue-text");
@@ -1346,15 +1389,20 @@
         bgLayer.style.opacity = "0";
       }
 
-      if (node.character) {
-        if (currentCharacterSrc !== node.character) {
-          currentCharacterSrc = node.character;
-          charImg.src = node.character;
-          charLayer.style.opacity = "1";
-        }
+      // 判斷是否為撲向大耳狗的雙角色動畫
+      if (node.pounceScene) {
+        charLayer.innerHTML = `
+          <div class="pounce-scene">
+            <img class="pounce-target" src="assets/dumbo.png" alt="大耳狗">
+            <img class="pounce-attacker" src="assets/laowang.png" alt="隔壁老王">
+          </div>
+        `;
+      } else if (node.character) {
+        charLayer.innerHTML = `<img class="single-char" src="${node.character}" alt="角色立繪">`;
+        const img = charLayer.querySelector(".single-char");
+        if (img) img.style.opacity = "1";
       } else {
-        currentCharacterSrc = "";
-        charLayer.style.opacity = "0";
+        charLayer.innerHTML = "";
       }
 
       if (node.showPhone) {
@@ -1391,9 +1439,8 @@
       phoneInteractiveLayer.classList.remove("active");
 
       currentBgSrc = "";
-      currentCharacterSrc = "";
+      charLayer.innerHTML = "";
       bgLayer.style.opacity = "0";
-      charLayer.style.opacity = "0";
       historyStack = [];
       updateBackButtonState();
 
@@ -1411,9 +1458,8 @@
       phoneInteractiveLayer.classList.remove("active");
       choiceLayer.classList.add("hidden");
       bgLayer.style.opacity = "0";
-      charLayer.style.opacity = "0";
+      charLayer.innerHTML = "";
       currentBgSrc = "";
-      currentCharacterSrc = "";
       historyStack = [];
       startMenu.classList.remove("hidden");
     }
