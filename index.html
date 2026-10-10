@@ -620,7 +620,7 @@
       }
     }
 
-    // ===== 成就系統資料庫 =====
+    // ===== 成就資料庫 =====
     const ACHIEVEMENTS = [
       {
         id: "achieve_duck_rice",
@@ -641,10 +641,22 @@
         icon: "🛡️"
       },
       {
-        id: "achieve_waver",
-        title: "夜半的動搖",
-        desc: "深夜聽見大耳狗醉後的真心告白，偷家大戰邁向高潮。",
-        icon: "🍷"
+        id: "achieve_guanghan_sideeye",
+        title: "西屯許光漢的白眼",
+        desc: "吃酸菜魚藉故尿遁逃單，被兄弟當場看破手腳。",
+        icon: "🙄"
+      },
+      {
+        id: "achieve_alone_forever",
+        title: "澳洲袋鼠都笑你",
+        desc: "遠距離再次被甩，老王在出租屋抱著玩偶孤獨終老。",
+        icon: "🦘"
+      },
+      {
+        id: "achieve_cuckold_king",
+        title: "終極小丑王",
+        desc: "找 Angeline 約砲被拒，對方直奔台灣投奔西屯許光漢。",
+        icon: "🤡"
       }
     ];
 
@@ -686,6 +698,7 @@
 
     // ===== 劇本資料庫 =====
     const storyScript = {
+      // --- 開場回憶 ---
       intro_1: {
         speaker: "隔壁老王",
         text: "我叫隔壁老王",
@@ -843,7 +856,7 @@
         onNext: () => returnToMenu()
       },
 
-      // --- 事件一赴約到事件二過渡期 (偷情時光) ---
+      // --- 旅館赴約與偷情期 ---
       event1_hotel_meet: {
         speaker: "隔壁老王",
         text: "沒想到，大耳狗真的答應了。",
@@ -1043,19 +1056,253 @@
         text: "「我承認……我喝醉那天，我也動搖了。」",
         bg: "assets/room.jpg",
         character: null,
-        nextNode: "event4_climax"
+        nextNode: "ch5_together"
       },
-      event4_climax: {
+
+      // --- 第五章：確認關係與酸菜魚局 ---
+      ch5_together: {
         speaker: "隔壁老王",
-        text: "聽著電話那頭微醺的呢喃，房間裡只剩冷氣的運轉聲。",
+        text: "那通醉醺醺的電話，成了徹底粉碎她現任的致命一擊。",
         bg: "assets/room.jpg",
         character: "assets/laowang.png",
-        nextNode: "event4_final"
+        nextNode: "ch5_dating"
       },
-      event4_final: {
+      ch5_dating: {
+        speaker: "隔壁老王",
+        text: "大耳狗毅然決然跟現任攤牌分手，名正言順地回到了我的懷抱。",
+        bg: "assets/room.jpg",
+        character: "assets/laowang.png",
+        nextNode: "ch5_happy_days"
+      },
+      ch5_happy_days: {
+        speaker: "隔壁老王",
+        text: "我們過了一段甜蜜的熱戀期，每天膩在一起，彷彿三年的空白從未存在過。",
+        bg: "assets/room.jpg",
+        character: "assets/laowang.png",
+        nextNode: "ch5_suancaiyu"
+      },
+      ch5_suancaiyu: {
+        speaker: "隔壁老王",
+        text: "身為偷家大師，我決定帶她去吃酸菜魚，正式介紹我的兩位至尊好友——",
+        bg: "assets/room.jpg",
+        character: "assets/laowang.png",
+        nextNode: "ch5_friends_intro"
+      },
+      ch5_friends_intro: {
+        speaker: "隔壁老王",
+        text: "一位是戰鬥冰情聖『178 特級亞大熊男』，另一位則是全台中最帥的『西屯許光漢』。",
+        bg: "assets/room.jpg",
+        character: null,
+        nextNode: "ch5_guanghan_talk"
+      },
+      ch5_guanghan_talk: {
+        speaker: "西屯許光漢",
+        text: "「老王，你這波回國偷家操作，比我抓的油頭還要滑順啊。」",
+        bg: "assets/room.jpg",
+        character: null,
+        nextNode: "ch5_bear_talk"
+      },
+      ch5_bear_talk: {
+        speaker: "178 特級亞大熊男",
+        text: "「唉……雖然寶寶最後選了妳，但在我心裡，老王永遠是最棒的。」",
+        bg: "assets/room.jpg",
+        character: null,
+        nextNode: "ch5_dumbo_confused"
+      },
+      ch5_dumbo_confused: {
+        speaker: "大耳狗",
+        text: "「……老王，你這兩個朋友看起來怎麼一個比你可靠，一個比你帥？」",
+        bg: "assets/room.jpg",
+        character: null,
+        nextNode: "ch5_bill_choice"
+      },
+      ch5_bill_choice: {
+        speaker: "隔壁老王",
+        text: "酸菜魚吃得差不多了，服務生拿來了四位數的帳單……",
+        bg: "assets/room.jpg",
+        character: "assets/laowang.png",
+        choices: [
+          { text: "霸氣掏卡：這餐算我的！", nextNode: "ch5_pay_card" },
+          { text: "假裝肚子痛，跑去廁所尿遁", nextNode: "ch5_pee_escape" }
+        ]
+      },
+      ch5_pay_card: {
+        speaker: "隔壁老王",
+        text: "我啪一聲把海外信用卡拍在桌上，大耳狗眼裡泛起崇拜的星星眼。",
+        bg: "assets/room.jpg",
+        character: "assets/laowang.png",
+        nextNode: "ch6_departure"
+      },
+      ch5_pee_escape: {
+        speaker: "西屯許光漢",
+        text: "「乾，老王你留澳留到連幾千塊酸菜魚都要尿遁？別把澳洲當藉口喔！」",
+        bg: "assets/room.jpg",
+        character: null,
+        unlockAchievement: "achieve_guanghan_sideeye",
+        nextNode: "ch5_bear_save"
+      },
+      ch5_bear_save: {
+        speaker: "隔壁老王",
+        text: "最後由熊男苦笑著掏卡結帳。雖然社死，但省了一餐，老王依舊覺得自己血賺。",
+        bg: "assets/room.jpg",
+        character: "assets/laowang.png",
+        nextNode: "ch6_departure"
+      },
+
+      // --- 第六章：畫大餅回澳洲與遠距崩盤 ---
+      ch6_departure: {
+        speaker: "隔壁老王",
+        text: "歡樂的時光總是短暫，簽證即將到期的我，終究得收拾行李滾回澳洲。",
+        bg: "assets/airport.jpg",
+        character: "assets/laowang.png",
+        nextNode: "ch6_airport_promise"
+      },
+      ch6_airport_promise: {
+        speaker: "隔壁老王",
+        text: "在桃園機場出境大廳，我看著依依不捨的大耳狗，畫下了一個頂級大餅：",
+        bg: "assets/airport.jpg",
+        character: "assets/laowang.png",
+        nextNode: "ch6_promise_words"
+      },
+      ch6_promise_words: {
+        speaker: "隔壁老王",
+        text: "「乖，等我！我回澳洲一定想辦法幫妳辦簽證，接妳過來澳洲看袋鼠！」",
+        bg: "assets/airport.jpg",
+        character: "assets/laowang.png",
+        nextNode: "ch6_dumbo_reply"
+      },
+      ch6_dumbo_reply: {
+        speaker: "大耳狗",
+        text: "「不只要看袋鼠，我還要看你的澳洲大香腸！」",
+        bg: "assets/airport.jpg",
+        character: null,
+        nextNode: "ch6_back_australia"
+      },
+      ch6_back_australia: {
+        speaker: "隔壁老王",
+        text: "帶著這份沉甸甸的承諾，我意氣風發地飛回了南半球。",
+        bg: "assets/room.jpg",
+        character: "assets/laowang.png",
+        onEnter: () => fadeOutBgm(2.0),
+        nextNode: "ch6_time_flies"
+      },
+      ch6_time_flies: {
+        speaker: "隔壁老王",
+        text: "然而，現實的耳光總是來得又快又響。才剛過三個禮拜……",
+        bg: "assets/room.jpg",
+        character: null,
+        nextNode: "ch6_breakup_vibe"
+      },
+      ch6_breakup_vibe: {
+        speaker: "隔壁老王",
+        text: "手機在漆黑的房間裡震動，跳出了一段滿滿負能量的長篇小作文。",
+        bg: "assets/room.jpg",
+        character: null,
+        onEnter: () => playPhoneVibrateSound(),
+        nextNode: "ch6_dumbo_breakup"
+      },
+      ch6_dumbo_breakup: {
+        speaker: "大耳狗",
+        text: "「老王……我真的撐不下去了。時差跟遠距離讓我好沒安全感，我們還是分手吧。」",
+        bg: "assets/room.jpg",
+        character: null,
+        nextNode: "ch6_blocked"
+      },
+      ch6_blocked: {
+        speaker: "隔壁老王",
+        text: "下一秒，紅色的驚嘆號亮起。我，隔壁老王，再次被大耳狗踢出了生命。",
+        bg: "assets/room.jpg",
+        character: "assets/laowang.png",
+        nextNode: "ch6_climax_choice"
+      },
+      ch6_climax_choice: {
+        speaker: "隔壁老王",
+        text: "看著窗外冰冷的異國街道，三年執念終成一場笑話。此時此刻，我該怎麼辦？",
+        bg: "assets/room.jpg",
+        character: "assets/laowang.png",
+        choices: [
+          { text: "原地崩潰，當個深情 Emo 小丑", nextNode: "end_alone" },
+          { text: "點開 WeChat，回覆 Angeline 的訊息", nextNode: "end_angeline_1" }
+        ]
+      },
+
+      // --- 最終結局 A：孤獨一人 ---
+      end_alone: {
+        speaker: "隔壁老王",
+        text: "我關掉手機螢幕，默默抱著床頭的袋鼠玩偶縮在沙發角落。",
+        bg: "assets/room.jpg",
+        character: null,
+        nextNode: "end_alone_2"
+      },
+      end_alone_2: {
+        speaker: "隔壁老王",
+        text: "榮耀沒了，大耳狗跑了，大香腸也沒人看了，連巷口的當歸鴨肉飯都吃不到。",
+        bg: "assets/room.jpg",
+        character: null,
+        nextNode: "end_alone_3"
+      },
+      end_alone_3: {
         speaker: "系統",
-        text: "【章節高潮達成：夜半的動搖】\n大耳狗的防線徹底瓦解，這場隔壁老王偷家大計，未完待續……",
-        unlockAchievement: "achieve_waver",
+        text: "【最終結局：孤獨終老】\n在南半球的冷風中，老王獨自喝著大冰美，連路過的袋鼠都忍不住笑出聲。",
+        unlockAchievement: "achieve_alone_forever",
+        onNext: () => returnToMenu()
+      },
+
+      // --- 最終結局 B：Angeline 世紀反殺 ---
+      end_angeline_1: {
+        speaker: "隔壁老王",
+        text: "笑死，老子可是海王隔壁老王，怎麼可能為了一個女人要死要活？",
+        bg: "assets/room.jpg",
+        character: "assets/laowang.png",
+        nextNode: "end_angeline_2"
+      },
+      end_angeline_2: {
+        speaker: "隔壁老王",
+        text: "我擦乾不存在的眼淚，自信地滑開 WeChat，找到 Angeline 的頭像敲下訊息：",
+        bg: "assets/room.jpg",
+        character: "assets/laowang.png",
+        nextNode: "end_angeline_send"
+      },
+      end_angeline_send: {
+        speaker: "隔壁老王",
+        text: "「寶貝，妳上次說的新姿勢，我回澳洲了，今晚老地方見面試試？」",
+        bg: "assets/room.jpg",
+        character: "assets/laowang.png",
+        nextNode: "end_angeline_vibe"
+      },
+      end_angeline_vibe: {
+        speaker: "隔壁老王",
+        text: "對方居然秒回了！然而彈出來的文字卻字字誅心——",
+        bg: "assets/room.jpg",
+        character: null,
+        onEnter: () => playPhoneVibrateSound(),
+        nextNode: "end_angeline_reply"
+      },
+      end_angeline_reply: {
+        speaker: "Angeline",
+        text: "「滾啦！你這個消失一個月回國偷家的臭渣男！老娘才不跟你約！」",
+        bg: "assets/room.jpg",
+        character: null,
+        nextNode: "end_angeline_reply_2"
+      },
+      end_angeline_reply_2: {
+        speaker: "Angeline",
+        text: "「我已經買好機票飛去台灣找『西屯許光漢』了，他才是全球最深情、最頂級的男人！」",
+        bg: "assets/room.jpg",
+        character: null,
+        nextNode: "end_angeline_cuckold"
+      },
+      end_angeline_cuckold: {
+        speaker: "隔壁老王",
+        text: "……蛤？？？？？？連 Angeline 都被西屯許光漢給偷了？？？",
+        bg: "assets/room.jpg",
+        character: "assets/laowang.png",
+        nextNode: "end_angeline_final"
+      },
+      end_angeline_final: {
+        speaker: "系統",
+        text: "【隱藏絕望結局：終極小丑王】\n前女友跟現任跑了，好兄弟把你的砲友給收了。搞到最後，隔壁老王終究還是一個人。",
+        unlockAchievement: "achieve_cuckold_king",
         onNext: () => returnToMenu()
       }
     };
